@@ -34,14 +34,12 @@ npm run start
 
 ## 📦 Build for Distribution
 
-### To package NoteMaster for your operating system, run:
+### To package Whiteboard for your operating system, run:
 
-npm run build
+```
+npm run make
+```
 
-### For specific platforms:
-	•	Windows: npm run build:win
-	•	MacOS: npm run build:mac
-	•	Linux: npm run build:linux
 
 ## 💻 Technologies Used
 	•	Electron.js – For cross-platform desktop application development.
