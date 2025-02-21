@@ -1,8 +1,8 @@
-NoteMaster - A Cross-Platform Note-Taking App 📝
+# Whiteboard - A Cross-Platform Note-Taking App 📝
 
 NoteMaster is a lightweight, cross-platform note-taking application built with Electron.js. It helps you stay organized with resizable sticky notes and an intuitive line-drawing tool to visualize your thoughts. Whether you’re brainstorming, sketching ideas, or jotting down quick notes, NoteMaster provides a seamless and flexible experience.
 
-🚀 Features
+## 🚀 Features
 
 ✅ Cross-Platform – Runs on Windows, macOS, and Linux thanks to Electron.js.
 ✅ Resizable Sticky Notes – Create and freely resize notes to organize your workspace efficiently.
@@ -11,55 +11,60 @@ NoteMaster is a lightweight, cross-platform note-taking application built with E
 ✅ Customizable Interface – Arrange and manage notes however you like.
 ✅ Lightweight & Fast – Minimal UI with a focus on productivity.
 
-🛠️ Installation
+## 🛠️ Installation
 
-Clone the Repository
+### Clone the Repository
 
-git clone https://github.com/yourusername/notemaster.git
-cd notemaster
+```
+git clone https://github.com/jbcooper96/whiteboard.git
+cd whiteboard
+```
 
-Install Dependencies
+### Install Dependencies
 
+```
 npm install
+```
 
-Run the App
+### Run the App
 
-npm start
+```
+npm run start
+```
 
-📦 Build for Distribution
+## 📦 Build for Distribution
 
-To package NoteMaster for your operating system, run:
+### To package NoteMaster for your operating system, run:
 
 npm run build
 
-For specific platforms:
+### For specific platforms:
 	•	Windows: npm run build:win
 	•	MacOS: npm run build:mac
 	•	Linux: npm run build:linux
 
-💻 Technologies Used
+## 💻 Technologies Used
 	•	Electron.js – For cross-platform desktop application development.
 	•	HTML/CSS/JavaScript – To create a simple and user-friendly UI.
-	•	Canvas API – For smooth and precise line drawing.
 
-🎨 Screenshots
+## 🎨 Screenshots
 
 <img width="884" alt="Screenshot 2025-02-20 at 7 20 14 PM" src="https://github.com/user-attachments/assets/41c51b52-c69c-46ab-b1e5-c7992f58c928" />
 
-🔧 Future Features
+## 🔧 Future Features
 
 📌 Dark Mode
 📌 Export Notes as Images
 📌 Multi-Page Canvas for Larger Projects
 📌 Cloud Sync Support
 
-🤝 Contributing
+## 🤝 Contributing
 
 Pull requests are welcome! Feel free to fork the repository and submit changes.
 For major changes, please open an issue first to discuss your ideas.
 
-📜 License
+## 📜 License
 
-MIT License © 2025 Your Name / GitHub Handle
+MIT License © 2025 James Cooper / jbcooper96
 
-Let me know if you’d like any modifications or additions! 🚀
+### Let me know if you’d like any modifications or additions! 🚀
