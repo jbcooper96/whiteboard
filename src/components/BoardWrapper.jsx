@@ -1,9 +1,10 @@
 import React from 'react'
-import {useState, useRef} from 'react'
+import { useState, useRef } from 'react'
 import Board from './Board.jsx'
 import ControlBar from './ControlBar.jsx'
 import Tools from '../enums/Tools.js'
 import ActionHistoryManager from '../utils/ActionHistoryManager.js';
+import {TextSettingsProvider} from '../contexts/TextSettingsContext.jsx';
 
 const actionHistoryManager = new ActionHistoryManager();
 
@@ -34,13 +35,15 @@ export default function BoardWrapper() {
         setCanGoBackward(actionHistoryManager.canUndo());
         setCanGoForward(actionHistoryManager.canRedo());
     }
- 
+
     return (
         <div>
-            <ControlBar canGoForward={canGoForward} canGoBackward={canGoBackward} clear={handleClear} selectedTool={selectedTool} 
-                setSelectedTool={setSelectedTool} forward={handleForward} backward={handleBackward} useGrid={useGrid} toggleSnapToGrid={toggleSnapToGrid}/>
-            <Board ref={board} checkHistory={checkHistory} selectedTool={selectedTool} actionHistoryManager={actionHistoryManager} useGrid={useGrid}/>
-            <div className="paperOverlay"></div>
+            <TextSettingsProvider>
+                <ControlBar canGoForward={canGoForward} canGoBackward={canGoBackward} clear={handleClear} selectedTool={selectedTool}
+                    setSelectedTool={setSelectedTool} forward={handleForward} backward={handleBackward} useGrid={useGrid} toggleSnapToGrid={toggleSnapToGrid} />
+                <Board ref={board} checkHistory={checkHistory} selectedTool={selectedTool} actionHistoryManager={actionHistoryManager} useGrid={useGrid} />
+                <div className="paperOverlay"></div>
+            </TextSettingsProvider>
         </div>
     )
 }

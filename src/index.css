@@ -30,6 +30,27 @@ body {
   box-shadow: -.25px 0px 10px #583101;
 }
 
+.text-tool-bar {
+  height: 35px;
+  margin-left: 1rem;
+}
+
+.text-tool-bar .alignment-tools button {
+  height: 16px;
+  width: 24px;
+  padding: 0;
+}
+
+.text-tool-bar .alignment-tools .top-row {
+  display: flex;
+  margin-bottom: 2px;
+}
+
+.text-tool-bar .alignment-tools .bottom-row {
+  display: flex;
+  margin-bottom: 1px;
+}
+
 .control-bar button {
   height: 35px;
   width:44px;
@@ -84,7 +105,23 @@ body {
   overflow: hidden;
   width: 100%;
   height: 100%;
-  display: block;
+  display: flex;
+}
+
+.sticker .horizontal-center {
+  justify-content: center;
+}
+
+.sticker .horizontal-right {
+  justify-content: right;
+}
+
+.sticker .vertical-center {
+  align-items: center;
+}
+
+.sticker .vertical-bottom {
+  align-items: end
 }
 
 .editing {
@@ -115,6 +152,7 @@ body {
   margin: 0;
   padding: 0;
   background-color: #f3d5b5;
+  display: flex;
 }
 
 .resizer {
