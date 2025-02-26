@@ -5,6 +5,7 @@ import TextAlign from '../enums/TextAlign.js';
 import { textSettingContext } from '../contexts/TextSettingsContext.jsx';
 import Tools from '../enums/Tools.js';
 import Directions from '../enums/Directions.js'
+import TextEditor from './TextEditor.jsx';
 
 
 export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width, height, text, setText, selectedTool, deleteSticker, resizeSticker }) {
@@ -14,12 +15,24 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
     const { textSettings } = useContext(textSettingContext);
 
     useEffect(() => {
+        function handleClickOutside(event) {
+            console.log("clickHandleBlur")
+            if (textareaRef.current && !textareaRef.current.contains(event.target)) {
+                changeContent();
+            }
+        }
         if (editing && textareaRef.current) {
             textareaRef.current.focus();
+            document.addEventListener("click", handleClickOutside);
         }
+        else {
+            document.removeEventListener("click", handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener("click", handleClickOutside);
+        };
     }, [editing]);
 
-    const content = text ? text : "Enter text here...";
 
     const mouseDown = (event) => {
         if (selectedTool === Tools.ERASER) {
@@ -40,9 +53,9 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
         textareaRef.current.focus();
     }
 
-    const changeContent = (event) => {
+    const changeContent = () => {
         setEditing(false)
-        setText(event.target.innerHTML, stickerId);
+        //setText(event.target.innerHTML, stickerId);
     }
 
     const className = editing ? "sticker editing" : "sticker noselect noedit"
@@ -53,30 +66,6 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
     const clickResizer = (event, direction) => {
         event.stopPropagation();
         resizeSticker(stickerId, direction, event.clientX, event.clientY);
-    }
-
-    const getAlignClassname = () => {
-        let alignClassname = "";
-        if (textSettings.horizontalAlign === TextAlign.LEFT) {
-            alignClassname += "horizontal-left ";
-        }
-        else if (textSettings.horizontalAlign === TextAlign.CENTER) {
-            alignClassname += "horizontal-center ";
-        }
-        else if (textSettings.horizontalAlign === TextAlign.RIGHT) {
-            alignClassname += "horizontal-right ";
-        }
-
-        if (textSettings.verticalAlign === TextAlign.TOP) {
-            alignClassname += "vertical-top";
-        }
-        else if (textSettings.verticalAlign === TextAlign.CENTER) {
-            alignClassname += "vertical-center";
-        }
-        else if (textSettings.verticalAlign === TextAlign.BOTTOM) {
-            alignClassname += "vertical-bottom";
-        }
-        return alignClassname;
     }
 
     return (
@@ -99,10 +88,12 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
             {editing || <div className="resizer bottom" onMouseDown={(event) => clickResizer(event, Directions.BOTTOM)} 
                 style={{width: parseInt(width)}} onMouseEnter={() => setResizeHover(true)} onMouseLeave={() => setResizeHover(false)}></div>}
          
-            <span ref={textareaRef} contentEditable={editing} onBlur={changeContent} className={getAlignClassname()} dangerouslySetInnerHTML={{__html: content}}></span>
+            <TextEditor ref={textareaRef} readonly={!editing}/>
+            
 
         </div>
     );
 }
 
 //<textarea ref={textareaRef} onBlur={changeContent} defaultValue={content}></textarea>
+//<span ref={textareaRef} contentEditable={editing} onBlur={changeContent} className={getAlignClassname()} dangerouslySetInnerHTML={{__html: content}}></span>

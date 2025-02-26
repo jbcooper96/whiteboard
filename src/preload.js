@@ -4,5 +4,6 @@ import {ipcRenderer, contextBridge} from 'electron';
 console.log('preload')
 contextBridge.exposeInMainWorld('electronAPI', {
     onUpdateFile: (callback) => { ipcRenderer.on('update-file', (_event, value) => callback(value)) },
-    updateFile: (file) => ipcRenderer.invoke('change-file', file)
+    updateFile: (file) => ipcRenderer.invoke('change-file', file),
+    getFonts: async () => await ipcRenderer.invoke('get-fonts')
 })

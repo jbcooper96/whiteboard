@@ -3,6 +3,15 @@ import path from 'node:path';
 const nativeImage = require('electron').nativeImage;
 import started from 'electron-squirrel-startup';
 import File from './fileReader.js';
+import { exec } from "child_process";
+
+exec("system_profiler SPFontsDataType | grep 'Full Name'", (err, stdout) => {
+  if (err) {
+      console.error("Error fetching fonts:", err);
+      return;
+  }
+  console.log("Installed Fonts:", stdout.split("\n").map(font => font.trim()));
+});
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -194,6 +203,10 @@ ipcMain.handle("change-file", (event, file) => {
   currentFile.name = file.name;
   currentFile.lines = file.lines;
   currentFile.stickers = file.stickers;
+})
+
+ipcMain.handle("get-fonts", async () => {
+  return "test";
 })
 
 

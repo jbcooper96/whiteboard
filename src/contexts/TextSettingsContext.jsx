@@ -15,8 +15,32 @@ export function TextSettingsProvider({children}) {
         setTextSettings((prevState) => TextSettingsEditor.setTextAlignVertical(prevState, textAlign));
     }
 
+    const setBold = (bold) => {
+        setTextSettings((prevState) => TextSettingsEditor.setBold(prevState, bold));
+    }
+
+    const setItalic = (italic) => {
+        setTextSettings((prevState) => TextSettingsEditor.setItalic(prevState, italic));
+    }
+
+    const setUnderline = (underline) => {
+        setTextSettings((prevState) => TextSettingsEditor.setUnderline(prevState, underline));
+    }
+
+    const setTextStyle = (textStyle) => {
+        setTextSettings((prevState) => TextSettingsEditor.setTextStyle(prevState, textStyle));
+    }
+
     return (
-        <textSettingContext.Provider value={{textSettings, changeHorizontalAlign, changeVerticalAlign}}>
+        <textSettingContext.Provider value={{
+            textSettings, 
+            changeHorizontalAlign, 
+            changeVerticalAlign, 
+            setBold, 
+            setItalic, 
+            setUnderline,
+            setTextStyle
+        }}>
             {children}
         </textSettingContext.Provider>
     )

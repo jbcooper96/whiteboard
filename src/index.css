@@ -17,7 +17,7 @@ body {
 }
 
 .control-bar {
-  height: 35px;
+  height: 36px;
   background-color: #e7bc91;
   border-style: solid;
   border-width: 1px;
@@ -26,13 +26,72 @@ body {
 }
 
 .tool-bar {
-  margin-left: 1rem;
-  box-shadow: -.25px 0px 10px #583101;
+  margin-left: 1.25rem;
+  /**box-shadow: -.25px 0px 10px #583101;*/
 }
 
 .text-tool-bar {
-  height: 35px;
+  height: 36px;
+  margin-left: 1.25rem;
+  display: flex;
+}
+
+.select {
   margin-left: 1rem;
+  position: relative;
+  height:18px;
+  margin-top: 6px;
+  width: 200px;
+  font-size: small;
+}
+
+.selected-option {
+  background: #e7bc91;
+  padding: 5px;
+  /**border: 1px solid #583101;*/
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.selected-option:hover {
+  box-shadow: inset 0 0 12px #a47148;
+}
+
+.arrow {
+  width: 6px;
+  height: 6px;
+  border-left: 2px solid #583101;
+  border-bottom: 2px solid #583101;
+  transform: rotate(45deg);
+  transition: transform 0.2s ease-in-out;
+}
+
+.arrow.up {
+  transform: rotate(-135deg);
+}
+
+.dropdown {
+  list-style: none;
+  padding: 0;
+  margin: 5px 0 0;
+  background: #e7bc91;
+  position: absolute;
+  width: 100%;
+  max-height: 150px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown li {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.dropdown li:hover {
+  box-shadow: inset 0 0 12px #a47148;
 }
 
 .text-tool-bar .alignment-tools button {
@@ -43,7 +102,7 @@ body {
 
 .text-tool-bar .alignment-tools .top-row {
   display: flex;
-  margin-bottom: 2px;
+  margin-top: 2px;
 }
 
 .text-tool-bar .alignment-tools .bottom-row {
@@ -52,7 +111,7 @@ body {
 }
 
 .control-bar button {
-  height: 35px;
+  height: 36px;
   width:44px;
   border: none;
   background-color: #e7bc91;
@@ -94,19 +153,20 @@ body {
   border: solid;
   border-width: .5px;
   border-color: #e7bc91;
-  padding: .5rem;
+  padding: 1rem;
   position: absolute;
   cursor: pointer;
   background-color: #f3d5b5;
   box-shadow: .25px .25px 10px #583101;
 }
 
+/**
 .sticker span {
   overflow: hidden;
   width: 100%;
   height: 100%;
   display: flex;
-}
+}*/
 
 .sticker .horizontal-center {
   justify-content: center;
@@ -153,6 +213,7 @@ body {
   padding: 0;
   background-color: #f3d5b5;
   display: flex;
+  z-index: 1000
 }
 
 .resizer {

@@ -12,7 +12,8 @@ export default class ActionHistoryManager {
         const linesCopy = lines.map(line => {
             return {
                 start: {x: line.start.x, y: line.start.y},
-                end: {x: line.end.x, y: line.end.y}
+                end: {x: line.end.x, y: line.end.y},
+                id: line.id
             }
         });
         const stickersCopy = stickers.map(sticker => {return {...sticker}});
