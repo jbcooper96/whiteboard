@@ -1,6 +1,13 @@
 import Actions from '../enums/Actions.js';
 import LineReducerActions from '../enums/LineReducerActions.js';
 import StickerReducerActions from '../enums/StickerReducerActions.js';
+import { HistoryEditor } from 'slate-history';
+
+
+class HistoryItemTypes {
+    static STICKER_OR_LINE_EDIT = 0
+    static TEXT_EDIT = 1
+}
 
 export default class ActionHistoryManager {
     constructor() {
@@ -34,10 +41,26 @@ export default class ActionHistoryManager {
             const [linesCopy, stickersCopy] = this.#copyLinesAndStickers(lines, stickers);
             this.#history.push({
                 stickers: stickersCopy,
-                lines: linesCopy
+                lines: linesCopy,
+                type: HistoryItemTypes.STICKER_OR_LINE_EDIT
             });
             this.#undoneActions = [];
         }
+    }
+
+    addTextChangeToHistory(editor, stickerId=null) {
+        console.log("addTextChangeToHistory");
+        if (this.#history.length === 0 || this.#history[this.#history.length - 1].stickerId !== stickerId) {
+            this.#history.push({
+                stickerId: stickerId,
+                editor: editor,
+                startUndoLength: editor.history.undos.length,
+                startRedoLength: editor.history.redos.length,
+                type: HistoryItemTypes.TEXT_EDIT
+            });
+        }
+        
+        this.#undoneActions = [];
     }
 
     clear () {
@@ -47,27 +70,59 @@ export default class ActionHistoryManager {
 
     undo(dispatchLines, dispatchStickers, lines, stickers) {
         if (this.#history.length > 0) {
-            const [linesCopy, stickersCopy] = this.#copyLinesAndStickers(lines, stickers);
-            this.#undoneActions.push({
-                stickers: stickersCopy,
-                lines: linesCopy
-            });
             const lastAction = this.#history.pop();
-            dispatchLines({type: LineReducerActions.SET_LINES, lines: lastAction.lines});
-            dispatchStickers({type: StickerReducerActions.SET_STICKERS, stickers: lastAction.stickers});
+
+            if (lastAction.type === HistoryItemTypes.STICKER_OR_LINE_EDIT) {
+                const [linesCopy, stickersCopy] = this.#copyLinesAndStickers(lines, stickers);
+                this.#undoneActions.push({
+                    stickers: stickersCopy,
+                    lines: linesCopy,
+                    type: HistoryItemTypes.STICKER_OR_LINE_EDIT
+                });
+                dispatchLines({type: LineReducerActions.SET_LINES, lines: lastAction.lines});
+                dispatchStickers({type: StickerReducerActions.SET_STICKERS, stickers: lastAction.stickers});
+            }
+            else {
+                HistoryEditor.undo(lastAction.editor);
+                console.log(lastAction.editor.history.undos.length);
+                console.log(lastAction.startUndoLength);
+                if (lastAction.editor.history.undos.length > lastAction.startUndoLength) {
+                    this.#history.push(lastAction);
+                }
+                if (this.#undoneActions.length === 0 || this.#undoneActions[this.#undoneActions.length - 1].stickerId !== lastAction.stickerId) {
+                    this.#undoneActions.push(lastAction);
+                }
+            }
         }
     }
 
     redo(dispatchLines, dispatchStickers, lines, stickers) {
         if (this.#undoneActions.length > 0) {
-            const [linesCopy, stickersCopy] = this.#copyLinesAndStickers(lines, stickers);
-            this.#history.push({
-                stickers: stickersCopy,
-                lines: linesCopy
-            });
             const lastAction = this.#undoneActions.pop();
-            dispatchLines({type: LineReducerActions.SET_LINES, lines: lastAction.lines});
-            dispatchStickers({type: StickerReducerActions.SET_STICKERS, stickers: lastAction.stickers});
+
+            if (lastAction.type === HistoryItemTypes.STICKER_OR_LINE_EDIT) {
+                const [linesCopy, stickersCopy] = this.#copyLinesAndStickers(lines, stickers);
+                this.#history.push({
+                    stickers: stickersCopy,
+                    lines: linesCopy,
+                    type: HistoryItemTypes.STICKER_OR_LINE_EDIT
+                });
+                
+                dispatchLines({type: LineReducerActions.SET_LINES, lines: lastAction.lines});
+                dispatchStickers({type: StickerReducerActions.SET_STICKERS, stickers: lastAction.stickers});
+            }
+            else {
+                HistoryEditor.redo(lastAction.editor);
+                console.log(lastAction.editor.history.redos.length);
+                console.log(lastAction.startRedoLength);
+                if (lastAction.editor.history.redos.length > lastAction.startRedoLength) {
+                    this.#undoneActions.push(lastAction);
+                }
+                if (this.#history.length === 0 || this.#history[this.#history.length - 1].stickerId !== lastAction.stickerId) {
+                    this.#history.push(lastAction);
+                }
+            }
+            
         }
     }
 

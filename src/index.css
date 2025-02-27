@@ -129,6 +129,7 @@ body {
 
 .control-bar button:disabled {
   opacity: 60%;
+  box-shadow: none !important;
 }
 
 .paperOverlay {

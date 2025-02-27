@@ -14,12 +14,14 @@ import H2 from '../icons/H2.jsx';
 import Body from '../icons/Body.jsx';
 import OrderedList from '../icons/OrderedList.jsx';
 import UnorderedList from '../icons/UnorderedList.jsx';
-import Quotes from '../icons/Quotes.jsx';
+import Unindent from '../icons/Unindent.jsx';
 import TextStyles from '../enums/TextStyles.js';
 
 
+const LIST_TYPES = [TextStyles.LIST, TextStyles.NUMBERED_LIST];
+
 export default function TextSettings() {
-    const { textSettings, changeHorizontalAlign, setBold, setItalic, setUnderline, setTextStyle } = useContext(textSettingContext);
+    const { textSettings, changeHorizontalAlign, setBold, setItalic, setUnderline, setTextStyle, setTextStyleAndListDepth } = useContext(textSettingContext);
 
     const getHorizontalClassname = (horizontalAlign) => {
         return horizontalAlign === textSettings.horizontalAlign ? "active" : ""
@@ -39,6 +41,28 @@ export default function TextSettings() {
 
     const getTextStyleClassname = (textStyle) => {
         return textSettings.textStyle === textStyle ? "active" : "";
+    }
+
+    const setListIndent = (listType) => {
+        if (LIST_TYPES.includes(textSettings.textStyle)) {
+            setTextStyleAndListDepth(listType, textSettings.listDepth + 1);
+        }
+        else {
+            setTextStyleAndListDepth(listType, 1);
+        }
+    }
+
+    const removeIndent = () => {
+        if (textSettings.listDepth > 1) {
+            setTextStyleAndListDepth(textSettings.textStyle, textSettings.listDepth - 1);
+        }
+        else {
+            setTextStyleAndListDepth(TextStyles.PARAGRAPH, 0);
+        }
+    }
+
+    const removeIndentEnabled = () => {
+        return textSettings.listDepth > 0;
     }
 
     const fonts = [
@@ -111,17 +135,17 @@ export default function TextSettings() {
                 </div>
                 <div className="bottom-row">
                     <button className={getTextStyleClassname(TextStyles.LIST)} onClick={(event) => {
-                        setTextStyle(TextStyles.LIST);
+                        setListIndent(TextStyles.LIST);
                         event.stopPropagation();
                     }} title="Unordered List"><UnorderedList /></button>
                     <button className={getTextStyleClassname(TextStyles.NUMBERED_LIST)} onClick={(event) => {
-                        setTextStyle(TextStyles.NUMBERED_LIST);
+                        setListIndent(TextStyles.NUMBERED_LIST);
                         event.stopPropagation();
                     }} title="Numbered List"><OrderedList /></button>
-                    <button className={getTextStyleClassname(TextStyles.BLOCK_QUOTE)} onClick={(event) => {
-                        setTextStyle(TextStyles.BLOCK_QUOTE);
+                    <button disabled={!removeIndentEnabled()} onClick={(event) => {
+                        removeIndent();
                         event.stopPropagation();
-                    }} title="Numbered List"><Quotes /></button>
+                    }} title="Unindent"><Unindent /></button>
                 </div>
             </div>
         </div>

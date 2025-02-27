@@ -1,22 +1,44 @@
 import React, { useState, useCallback, useContext, useEffect } from 'react';
 import { createEditor, Transforms, Editor, Element as SlateElement } from 'slate'
 import { Slate, Editable, withReact } from 'slate-react'
+import { withHistory, HistoryEditor } from 'slate-history';
 import { textSettingContext } from '../contexts/TextSettingsContext.jsx';
 import TextStyles from '../enums/TextStyles.js';
 
 const LIST_TYPES = [TextStyles.LIST, TextStyles.NUMBERED_LIST];
 
-export default function TextEditor({ readonly, onBlur, ref }) {
+
+export default function TextEditor({ readonly, ref, onEditText, text, updateHistory }) {
     const renderElement = useCallback(props => <Element {...props} />, [])
     const renderLeaf = useCallback(props => <Leaf {...props} />, [])
-    const [editor] = useState(() => withReact(createEditor()));
-    const { textSettings, changeHorizontalAlign, setBold, setItalic, setUnderline, setTextStyle } = useContext(textSettingContext);
+    const [editor] = useState(() => withReact(withHistory(createEditor())));
+    const { textSettings, changeHorizontalAlign, setBold, setItalic, setUnderline, setTextStyle, setTextStyleAndListDepth } = useContext(textSettingContext);
+
+    useEffect(() => {
+        if (!readonly) {
+            checkFormatting();
+        }
+    }, [readonly])
 
     useEffect(() => {
         if (!readonly) {
             const isList = LIST_TYPES.includes(textSettings.textStyle);
-            const isActive = isBlockActive(editor, textSettings.textStyle);
+            let listDepth = getListDepth(editor);
 
+            let canIndentFurther = true;
+            /** code to prevent indenting further if there will be no list items on previous depth
+             
+            if (listDepth > 0) {
+                const { selection } = editor;
+                if (selection?.anchor?.path?.length > 1 && selection.anchor.path[selection.anchor.path.length - 2] === 0) {
+                    canIndentFurther = false;
+                }   
+                if (selection?.focus?.path?.length > 1 && selection.focus.path[selection.focus.path.length - 2] === 0) {
+                    canIndentFurther = false;
+                } 
+            }
+            console.log(canIndentFurther);
+            */
             if (isList) {
                 Transforms.setNodes(editor, { align: textSettings.horizontalAlign, type: TextStyles.LIST_ITEM });
             }
@@ -34,35 +56,29 @@ export default function TextEditor({ readonly, onBlur, ref }) {
             Editor.addMark(editor, "bold", textSettings.bold);
             Editor.addMark(editor, "italic", textSettings.italic);
             Editor.addMark(editor, "underline", textSettings.underline);
-            if (isList && !isActive) {
+            if (isList && canIndentFurther && listDepth < textSettings.listDepth) {
                 const block = { type: textSettings.textStyle, children: [] }
                 Transforms.wrapNodes(editor, block)
+            }
+            while (isList && listDepth > textSettings.listDepth) {
+                Transforms.liftNodes(editor);
+                listDepth = getListDepth(editor);
             }
         }
     }, [textSettings]);
 
-    const initialValue = !LIST_TYPES.includes(textSettings.textStyle)
-    ? [
-        {
-            type: textSettings.textStyle,
-            align: textSettings.horizontalAlign,
-            children: [
+    let initialValue;
+    try {
+        initialValue = JSON.parse(text);
+    }
+    catch (err) { }
+    
+
+    if (!initialValue) {
+        initialValue = !LIST_TYPES.includes(textSettings.textStyle)
+            ? [
                 {
-                    text: 'Enter text here...',
-                    bold: textSettings.bold,
-                    italic: textSettings.italic,
-                    underline: textSettings.underline
-                }
-            ],
-        },
-    ]
-    : [
-        {
-            type: textSettings.textStyle,
-            align: textSettings.horizontalAlign,
-            children: [
-                {
-                    type: TextStyles.LIST_ITEM,
+                    type: textSettings.textStyle,
                     align: textSettings.horizontalAlign,
                     children: [
                         {
@@ -72,23 +88,49 @@ export default function TextEditor({ readonly, onBlur, ref }) {
                             underline: textSettings.underline
                         }
                     ],
-                }
-            ],
-        },
-    ];
+                },
+            ]
+            : [
+                {
+                    type: textSettings.textStyle,
+                    align: textSettings.horizontalAlign,
+                    children: [
+                        {
+                            type: TextStyles.LIST_ITEM,
+                            align: textSettings.horizontalAlign,
+                            children: [
+                                {
+                                    text: 'Enter text here...',
+                                    bold: textSettings.bold,
+                                    italic: textSettings.italic,
+                                    underline: textSettings.underline
+                                }
+                            ],
+                        }
+                    ],
+                },
+            ];
+    }
+
 
 
 
 
     const checkFormatting = () => {
-        console.log(editor.children)
+        const listDepth = getListDepth(editor);
         const fragments = editor.getFragment();
         if (fragments?.length > 0) {
             if (textSettings.horizontalAlign !== fragments[0].align) {
                 changeHorizontalAlign(fragments[0].align);
             }
             if (textSettings.textStyle !== fragments[0].type) {
-                setTextStyle(fragments[0].type);
+
+                if (listDepth > 0) {
+                    setTextStyleAndListDepth(fragments[0].type, listDepth)
+                }
+                else {
+                    setTextStyle(fragments[0].type);
+                }
             }
             if (fragments[0].children?.length > 0 && fragments[0].children[0].bold !== textSettings.bold) {
                 setBold(!!fragments[0].children[0].bold);
@@ -102,34 +144,67 @@ export default function TextEditor({ readonly, onBlur, ref }) {
         }
     }
 
+    const keyDown = (event) => {
+        checkFormatting();
+        if (event.ctrlKey) {
+            if (event.key === "Backspace" && LIST_TYPES.includes(textSettings.textStyle)) {
+                if (textSettings.listDepth > 1) {
+                    setTextStyleAndListDepth(textSettings.textStyle, textSettings.listDepth - 1);
+                }
+                else {
+                    setTextStyleAndListDepth(TextStyles.PARAGRAPH, 0);
+                }
+            }
+            if (event.key === 'z') {
+                HistoryEditor.undo(editor);
+            }
+            event.preventDefault();
+        }
+        else if (event.key === 'Tab' && LIST_TYPES.includes(textSettings.textStyle)) {
+            setTextStyleAndListDepth(textSettings.textStyle, textSettings.listDepth + 1);
+            event.preventDefault();
+        }
+        updateHistory(editor);
+    }
+
     return (
-        <Slate editor={editor} initialValue={initialValue}>
+        <Slate
+            editor={editor} initialValue={initialValue}
+            onChange={value => {
+                const isAstChange = editor.operations.some(
+                    op => 'set_selection' !== op.type
+                )
+                if (isAstChange) {
+                    const content = JSON.stringify(value);
+                    onEditText(content, editor);
+                }
+            }}
+        >
             <Editable ref={ref} readOnly={readonly}
-                onBlur={onBlur}
                 renderElement={renderElement}
                 renderLeaf={renderLeaf}
                 onMouseUp={checkFormatting}
+                onKeyDown={keyDown}
                 style={{ height: "100%", overflow: "hidden" }}
             />
         </Slate>
     )
 }
 
-const isBlockActive = (editor, format, blockType = 'type') => {
+const getListDepth = (editor) => {
     const { selection } = editor
-    if (!selection) return false
+    if (!selection) return 0
 
-    const [match] = Array.from(
+    const match = Array.from(
         Editor.nodes(editor, {
             at: Editor.unhangRange(editor, selection),
             match: n =>
                 !Editor.isEditor(n) &&
                 SlateElement.isElement(n) &&
-                n[blockType] === format,
+                LIST_TYPES.includes(n.type),
         })
     )
-
-    return !!match;
+    return !!match ? match.length : 0;
 }
 
 const Element = ({ attributes, children, element }) => {

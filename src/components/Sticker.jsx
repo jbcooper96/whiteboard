@@ -8,7 +8,7 @@ import Directions from '../enums/Directions.js'
 import TextEditor from './TextEditor.jsx';
 
 
-export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width, height, text, setText, selectedTool, deleteSticker, resizeSticker }) {
+export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width, height, text, setText, updateTextHistory, selectedTool, deleteSticker, resizeSticker }) {
     const [editing, setEditing] = useState(false)
     const textareaRef = useRef(null);
     const [resizeHover, setResizeHover] = useState(false);
@@ -16,7 +16,6 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
 
     useEffect(() => {
         function handleClickOutside(event) {
-            console.log("clickHandleBlur")
             if (textareaRef.current && !textareaRef.current.contains(event.target)) {
                 changeContent();
             }
@@ -55,7 +54,6 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
 
     const changeContent = () => {
         setEditing(false)
-        //setText(event.target.innerHTML, stickerId);
     }
 
     const className = editing ? "sticker editing" : "sticker noselect noedit"
@@ -66,6 +64,14 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
     const clickResizer = (event, direction) => {
         event.stopPropagation();
         resizeSticker(stickerId, direction, event.clientX, event.clientY);
+    }
+
+    const onEditText = (newText) => {
+        setText(newText, stickerId);
+    }
+
+    const updateHistory = (editor) => {
+        updateTextHistory(stickerId, editor);
     }
 
     return (
@@ -88,12 +94,9 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
             {editing || <div className="resizer bottom" onMouseDown={(event) => clickResizer(event, Directions.BOTTOM)} 
                 style={{width: parseInt(width)}} onMouseEnter={() => setResizeHover(true)} onMouseLeave={() => setResizeHover(false)}></div>}
          
-            <TextEditor ref={textareaRef} readonly={!editing}/>
+            <TextEditor text={text} ref={textareaRef} readonly={!editing} onEditText={onEditText} updateHistory={updateHistory}/>
             
 
         </div>
     );
 }
-
-//<textarea ref={textareaRef} onBlur={changeContent} defaultValue={content}></textarea>
-//<span ref={textareaRef} contentEditable={editing} onBlur={changeContent} className={getAlignClassname()} dangerouslySetInnerHTML={{__html: content}}></span>

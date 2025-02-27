@@ -578,10 +578,15 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
     }
 
     const changeText = (text, stickerId) => {
-        actionHistoryManager.addToHistory(lines, stickers);
-        checkHistory();
         dispatchStickers({type: StickerReducerActions.CHANGE_TEXT, text: text, stickerId: stickerId});
     }
+
+    const updateTextHistory = (stickerId, editor) => {
+        if (editor) {
+            actionHistoryManager.addTextChangeToHistory(editor, stickerId);
+            checkHistory();
+        }
+    } 
 
     const onClick = (event) => {
         if (selectedTool === Tools.ERASER) {
@@ -624,7 +629,7 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
         <div onClick={onClick} onDoubleClick={doubleClick} onMouseDown={mouseDown} onMouseUp={mouseUp} onMouseMove={mouseMove} className='board'>
             <canvas height="1000" width="2000" ref={canvas} />
             {stickers.map(sticker =>
-                <Sticker key={sticker.stickerId} setDragging={setDrag} stickerId={sticker.stickerId} xCoord={sticker.x} resizeSticker={startResizingSticker}
+                <Sticker key={sticker.stickerId} setDragging={setDrag} stickerId={sticker.stickerId} xCoord={sticker.x} resizeSticker={startResizingSticker} updateTextHistory={updateTextHistory}
                     yCoord={sticker.y} text={sticker.text} setText={changeText} selectedTool={selectedTool} deleteSticker={deleteSticker} width={sticker.width} height={sticker.height}/>
             )}
         </div>

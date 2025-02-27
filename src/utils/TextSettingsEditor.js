@@ -3,16 +3,16 @@ import TextStyles from '../enums/TextStyles.js';
 
 export default class TextSettingsEditor {
     static setTextAlignVertical (prevSettings, textAlign) {
-        const verticalAlignValues = [TextAlign.TOP, TextAlign.CENTER, TextAlign.BOTTOM];
-        if (verticalAlignValues.includes(textAlign)) {
+        const VERTICAL_ALIGN_VALUES = [TextAlign.TOP, TextAlign.CENTER, TextAlign.BOTTOM];
+        if (VERTICAL_ALIGN_VALUES.includes(textAlign)) {
             return {...prevSettings, verticalAlign: textAlign};
         }
         return {...prevSettings}
     }
 
     static setTextAlignHorizontal (prevSettings, textAlign) {
-        const horizontalAlignValues = [TextAlign.LEFT, TextAlign.CENTER, TextAlign.RIGHT];
-        if (horizontalAlignValues.includes(textAlign)) {
+        const HORIZONTAL_ALIGN_VALUES = [TextAlign.LEFT, TextAlign.CENTER, TextAlign.RIGHT];
+        if (HORIZONTAL_ALIGN_VALUES.includes(textAlign)) {
             return {...prevSettings, horizontalAlign: textAlign};
         }
         return {...prevSettings}
@@ -30,10 +30,12 @@ export default class TextSettingsEditor {
         return {...prevSettings, underline: underline};
     }
 
-    static setTextStyle(prevSettings, textStyle) {
-        const textStyleValues = [TextStyles.PARAGRAPH, TextStyles.HEADING_1, TextStyles.HEADING_2, TextStyles.LIST, TextStyles.NUMBERED_LIST, TextStyles.BLOCK_QUOTE];
-        if (textStyleValues.includes(textStyle)) {
-            return {...prevSettings, textStyle: textStyle};
+    static setTextStyle(prevSettings, textStyle, listDepth=0) {
+        const TEST_STYLE_VALUES = [TextStyles.PARAGRAPH, TextStyles.HEADING_1, TextStyles.HEADING_2, TextStyles.LIST, TextStyles.NUMBERED_LIST, TextStyles.BLOCK_QUOTE];
+        const LIST_VALUES = [TextStyles.LIST, TextStyles.NUMBERED_LIST];
+
+        if (TEST_STYLE_VALUES.includes(textStyle)) {
+            return {...prevSettings, textStyle: textStyle, listDepth: listDepth};
         }
         return {...prevSettings};
     }
@@ -45,7 +47,8 @@ export default class TextSettingsEditor {
             bold: false,
             italic: false,
             underline: false,
-            textStyle: TextStyles.PARAGRAPH
+            textStyle: TextStyles.PARAGRAPH,
+            listDepth: 0
         }
     }
 

@@ -31,6 +31,10 @@ export function TextSettingsProvider({children}) {
         setTextSettings((prevState) => TextSettingsEditor.setTextStyle(prevState, textStyle));
     }
 
+    const setTextStyleAndListDepth = (textStyle, depth) => {
+        setTextSettings((prevState) => TextSettingsEditor.setTextStyle(prevState, textStyle, depth));
+    }
+
     return (
         <textSettingContext.Provider value={{
             textSettings, 
@@ -39,7 +43,8 @@ export function TextSettingsProvider({children}) {
             setBold, 
             setItalic, 
             setUnderline,
-            setTextStyle
+            setTextStyle,
+            setTextStyleAndListDepth
         }}>
             {children}
         </textSettingContext.Provider>
