@@ -12,7 +12,7 @@ export default function BoardWrapper() {
     const [canGoBackward, setCanGoBackward] = useState(false);
     const [canGoForward, setCanGoForward] = useState(false);
     const [useGrid, setUseGrid] = useState(false);
-    const [selectedTool, setSelectedTool] = useState(Tools.PEN);
+    const [selectedTool, setSelectedTool] = useState(Tools.STICKER);
     const board = useRef(null);
 
     const handleClear = () => {

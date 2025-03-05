@@ -7,6 +7,7 @@ import Tools from '../enums/Tools.js';
 import Directions from '../enums/Directions.js'
 import TextEditor from './TextEditor.jsx';
 
+const STICKER_PADDING = 20;
 
 export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width, height, text, setText, updateTextHistory, selectedTool, deleteSticker, resizeSticker }) {
     const [editing, setEditing] = useState(false)
@@ -63,7 +64,7 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
 
     const clickResizer = (event, direction) => {
         event.stopPropagation();
-        resizeSticker(stickerId, direction, event.clientX, event.clientY);
+        resizeSticker(stickerId, direction);
     }
 
     const onEditText = (newText) => {
@@ -74,8 +75,30 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
         updateTextHistory(stickerId, editor);
     }
 
+    const setPadding = (style) => {
+        const intWidth = parseInt(width);
+        const intHeight = parseInt(height);
+        if (intWidth < 2*STICKER_PADDING) {
+            style.paddingLeft = "0px";
+            style.paddingRight = "0px";
+        }
+        if (intHeight < 2*STICKER_PADDING) {
+            style.paddingTop = "0px";
+            style.paddingBottom = "0px";
+        }
+    }
+
+    const style = {
+        left: parseInt(xCoord), 
+        top: parseInt(yCoord), 
+        width: parseInt(width), 
+        height: parseInt(height) 
+    }
+
+    setPadding(style);
+ 
     return (
-        <div onMouseDown={mouseDown} onDoubleClick={doubleClick} style={{ left: parseInt(xCoord), top: parseInt(yCoord), width: parseInt(width), height: parseInt(height) }} className={className}>
+        <div onMouseDown={mouseDown} onDoubleClick={doubleClick} style={style} className={className}>
             
             {editing || <div className={"resizer top-left" + (showResize() ? "" : " hide")} onMouseDown={(event) => clickResizer(event, Directions.TOP_LEFT)} 
                 onMouseEnter={() => setResizeHover(true)} onMouseLeave={() => setResizeHover(false)}></div>}
@@ -86,13 +109,13 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
             {editing || <div className={"resizer bottom-right" + (showResize() ? "" : " hide")} onMouseDown={(event) => clickResizer(event, Directions.BOTTOM_RIGHT)} 
                 onMouseEnter={() => setResizeHover(true)} onMouseLeave={() => setResizeHover(false)}></div>}
             {editing || <div className="resizer top" onMouseDown={(event) => clickResizer(event, Directions.TOP)} 
-                style={{width: parseInt(width)}} onMouseEnter={() => setResizeHover(true)} onMouseLeave={() => setResizeHover(false)}></div>}
+                style={{width: .6 * parseInt(width), left: .2 * parseInt(width)}} onMouseEnter={() => setResizeHover(true)} onMouseLeave={() => setResizeHover(false)}></div>}
             {editing || <div className="resizer right" onMouseDown={(event) => clickResizer(event, Directions.RIGHT)} 
-                style={{height: parseInt(height)}} onMouseEnter={() => setResizeHover(true)} onMouseLeave={() => setResizeHover(false)}></div>}
+                style={{height: .6 * parseInt(height), top: .2 * parseInt(height)}} onMouseEnter={() => setResizeHover(true)} onMouseLeave={() => setResizeHover(false)}></div>}
             {editing || <div className="resizer left" onMouseDown={(event) => clickResizer(event, Directions.LEFT)} 
-                style={{height: parseInt(height)}} onMouseEnter={() => setResizeHover(true)} onMouseLeave={() => setResizeHover(false)}></div>}
+                style={{height: .6 * parseInt(height), top: .2 * parseInt(height)}} onMouseEnter={() => setResizeHover(true)} onMouseLeave={() => setResizeHover(false)}></div>}
             {editing || <div className="resizer bottom" onMouseDown={(event) => clickResizer(event, Directions.BOTTOM)} 
-                style={{width: parseInt(width)}} onMouseEnter={() => setResizeHover(true)} onMouseLeave={() => setResizeHover(false)}></div>}
+                style={{width: .6 * parseInt(width), left: .2 * parseInt(width)}} onMouseEnter={() => setResizeHover(true)} onMouseLeave={() => setResizeHover(false)}></div>}
          
             <TextEditor text={text} ref={textareaRef} readonly={!editing} onEditText={onEditText} updateHistory={updateHistory}/>
             
