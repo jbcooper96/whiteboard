@@ -36,6 +36,10 @@ body {
   display: flex;
 }
 
+.dropdown-button {
+  position: relative
+}
+
 .select {
   margin-left: 1rem;
   position: relative;
@@ -46,13 +50,7 @@ body {
 }
 
 .selected-option {
-  background: #e7bc91;
-  padding: 5px;
-  /**border: 1px solid #583101;*/
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  box-shadow: inset 0 0 12px #a47148;
 }
 
 .selected-option:hover {
@@ -60,11 +58,14 @@ body {
 }
 
 .arrow {
-  width: 6px;
-  height: 6px;
+  bottom: 4px;
+  right: 4px;
+  position: absolute;
+  width: 5px;
+  height: 5px;
   border-left: 2px solid #583101;
   border-bottom: 2px solid #583101;
-  transform: rotate(45deg);
+  transform: rotate(-45deg);
   transition: transform 0.2s ease-in-out;
 }
 
@@ -75,10 +76,12 @@ body {
 .dropdown {
   list-style: none;
   padding: 0;
-  margin: 5px 0 0;
+  left: 0;
+  margin: 10px 0 0;
   background: #e7bc91;
   position: absolute;
   width: 100%;
+  min-width: 110px;
   max-height: 150px;
   overflow-y: auto;
   z-index: 100;
@@ -147,6 +150,7 @@ body {
 .board {
   height: 1000px;
    width: 2000px;
+   position: relative;
 }
 
 
@@ -160,6 +164,15 @@ body {
   cursor: pointer;
   background-color: #f3d5b5;
   box-shadow: .25px .25px 10px #583101;
+}
+
+table, th, td {
+  border: 1px solid;
+}
+
+table {
+  height: 100%;
+  width: 100%
 }
 
 /**

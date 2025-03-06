@@ -11,6 +11,7 @@ import CanvisLogicHandler from '../utils/CanvasLogicHandler.js';
 import BoardStates from '../enums/BoardStates.js';
 import Directions from '../enums/Directions.js';
 import DirectionUtil from '../utils/DirectionUtil.js';
+import StickerTypes from '../enums/StickerTypes.js';
 
 let lineId = 0;
 
@@ -44,6 +45,8 @@ function stickerReducer(state, action) {
         case StickerReducerActions.ADD_STICKER: {
             if (action.sticker.stickerId === undefined)
                 action.sticker.stickerId = getStickerId();
+            if (action.sticker.type === undefined) 
+                action.sticker.type = StickerTypes.DEFAULT;
             setDefaultStickerSize(action.sticker);
             return [...state, action.sticker];
         }
@@ -66,12 +69,27 @@ function stickerReducer(state, action) {
         }
         case StickerReducerActions.MOVE_STICKER: {
             return state.map(stickerOld => {
-                if (stickerOld.stickerId != action.stickerId) {
+                if (stickerOld.stickerId != action.stickerId || action.x < 0 || action.y < 0) {
                     return stickerOld;
                 }
                 else {
+                    let attachedLines = [];
+                    if (stickerOld.attachedLines && action.dispatchLines) {
+                        attachedLines = stickerOld.attachedLines.map(attachedLine => {
+                            let newX = action.x - stickerOld.x + attachedLine.x;
+                            let newY = action.y - stickerOld.y + attachedLine.y;
+                            action.dispatchLines({
+                                type: LineReducerActions.EDIT_LINE,
+                                lineId: attachedLine.id,
+                                linePointType: attachedLine.linePoint,
+                                point: {x: newX, y: newY}
+                            });
+                            return { ...attachedLine, x: newX, y: newY};
+                        });
+                    }
                     return {
                         ...stickerOld,
+                        attachedLines: attachedLines,
                         x: action.x ? action.x : stickerOld.x,
                         y: action.y ? action.y : stickerOld.y,
                         realX: action.realX ? action.realX : stickerOld.realX,
@@ -94,6 +112,26 @@ function stickerReducer(state, action) {
                     return stickerOld;
                 }
                 else {
+                    let attachedLines = [];
+                    if (stickerOld.attachedLines && action.dispatchLines) {
+                        attachedLines = stickerOld.attachedLines.map(attachedLine => {
+                            let [newX, newY] = CanvisLogicHandler.getNewAttachPoint(
+                                stickerOld.x, stickerOld.y, stickerOld.width, stickerOld.height,
+                                action.x ? action.x : stickerOld.x,
+                                action.y ? action.y : stickerOld.y,
+                                action.width ? action.width : stickerOld.width,
+                                action.height ? action.height : stickerOld.height,
+                                attachedLine.x, attachedLine.y
+                            );
+                            action.dispatchLines({
+                                type: LineReducerActions.EDIT_LINE,
+                                lineId: attachedLine.id,
+                                linePointType: attachedLine.linePoint,
+                                point: {x: newX, y: newY}
+                            });
+                            return { ...attachedLine, x: newX, y: newY};
+                        });
+                    }
                     return {
                         ...stickerOld,
                         x: action.x ? action.x : stickerOld.x,
@@ -102,6 +140,7 @@ function stickerReducer(state, action) {
                         realY: action.realY ? action.realY : stickerOld.realY,
                         height: action.height ? action.height : stickerOld.height,
                         width: action.width ? action.width : stickerOld.width,
+                        attachedLines: attachedLines
                     }
                 }
             });
@@ -114,6 +153,27 @@ function stickerReducer(state, action) {
                     realY: stickerOld.y
                 }
             })
+        }
+        case StickerReducerActions.ADD_LINE_CONNECTION: {
+            return state.map(stickerOld => {
+                if (action.stickerId !== undefined && action.stickerId === stickerOld.stickerId) {
+                    let attachedLines = [];
+                    if (stickerOld.attachedLines) {
+                        attachedLines = stickerOld.attachedLines.map(line => { return { ...line }; });
+                    }
+                    console.log(attachedLines);
+                    attachedLines.push({
+                        id: action.lineId,
+                        x: action.x,
+                        y: action.y,
+                        linePoint: action.linePoint
+                    });
+                    return { ...stickerOld, attachedLines: attachedLines};
+                }
+                else {
+                    return stickerOld;
+                }
+            });
         }
     }
 }
@@ -167,11 +227,12 @@ function lineReducer(state, action) {
     }
 }
 
-export default function Board({ ref, checkHistory, useGrid, selectedTool, actionHistoryManager }) {
+export default function Board({ ref, checkHistory, useGrid, selectedTool, actionHistoryManager, stickerType }) {
     const GRID_INCREMENT = 25;
     const boardState = useRef(BoardStates.NEURTAL);
     const [stickers, dispatchStickers] = useReducer(stickerReducer, []);
     const [lines, dispatchLines] = useReducer(lineReducer, []);
+    const [stickerAttachHoverCoords, setStickerAttachHoverCoords] = useState(null);
 
     const resizingDirection = useRef(null);
     const prevDirection = useRef(null);
@@ -180,14 +241,18 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
     const mouseY = useRef(0);
     const drawingStartX = useRef(0);
     const drawingStartY = useRef(0);
+    const drawingStartIsAttachedToSticker = useRef(false);
+    const drawingStartAttachedSticker = useRef(null);
     const canvas = useRef(null);
     const hoveringLinePoint = useRef(false);
     const lineBeingEditedId = useRef(null);
     const linePointBeingEditied = useRef(null);
     const resizeAnchorPointX = useRef(null);
     const resizeAnchorPointY = useRef(null);
+    const board = useRef(null);
 
-    const redrawLines = useCallback(() => {
+    useEffect(() => {
+        console.log("redraw");
         redraw();
     }, [lines]);
 
@@ -200,7 +265,7 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
     useEffect(() => {
         window.electronAPI.onUpdateFile((defaultFile) => {
             const { newStickers, newLines } = FileUtil.parseFileObject(defaultFile, getLineId, getStickerId);
-            dispatchStickers({ type: StickerReducerActions.SET_STICKERS, stickers: newStickers });
+            dispatchStickerWrapper({ type: StickerReducerActions.SET_STICKERS, stickers: newStickers });
             dispatchLines({ type: LineReducerActions.SET_LINES, lines: newLines });
         })
 
@@ -222,6 +287,33 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
             }
         }
     }, [stickers, lines])
+
+    const dispatchStickerWrapper = (action) => {
+        action.dispatchLines = dispatchLines;
+        dispatchStickers(action);
+    }
+
+    const toBoardCoordsX = (clientX) => {
+        const rect = board.current.getBoundingClientRect();
+        return clientX - rect.left;
+    }
+
+    const toBoardCoordsY = (clientY) => {
+        const rect = board.current.getBoundingClientRect();
+        return clientY - rect.top;
+    }
+
+    const canvasCoordsToBoardCoordsX = (x) => {
+        const boardRect = board.current.getBoundingClientRect();
+        const canvasRect = canvas.current.getBoundingClientRect();
+        return x + canvasRect.left - boardRect.left;
+    }
+
+    const canvasCoordsToBoardCoordsY = (y) => {
+        const boardRect = board.current.getBoundingClientRect();
+        const canvasRect = canvas.current.getBoundingClientRect();
+        return y + canvasRect.top - boardRect.top;
+    }
 
     const snapToGrid = (coord) => {
         if (useGrid) {
@@ -266,12 +358,12 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
     }
 
     const backward = () => {
-        actionHistoryManager.undo(dispatchLines, dispatchStickers, lines, stickers);
+        actionHistoryManager.undo(dispatchLines, dispatchStickerWrapper, lines, stickers);
         checkHistory();
     }
 
     const forward = () => {
-        actionHistoryManager.redo(dispatchLines, dispatchStickers, lines, stickers);
+        actionHistoryManager.redo(dispatchLines, dispatchStickerWrapper, lines, stickers);
         checkHistory();
     }
 
@@ -296,7 +388,7 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
 
             switch (resizingDirection.current) {
                 case Directions.TOP_LEFT: {
-                    dispatchStickers({
+                    dispatchStickerWrapper({
                         type: StickerReducerActions.RESIZE_STICKER,
                         x: snapToGrid(x),
                         y: snapToGrid(y),
@@ -305,12 +397,11 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
                         width: resizeAnchorPointX.current - snapToGrid(x),
                         height: resizeAnchorPointY.current - snapToGrid(y),
                         stickerId: stickerBeingDragged.current
-
                     })
                     break;
                 }
                 case Directions.TOP_RIGHT: {
-                    dispatchStickers({
+                    dispatchStickerWrapper({
                         type: StickerReducerActions.RESIZE_STICKER,
                         y: snapToGrid(y),
                         realY: snapToGrid(y),
@@ -322,7 +413,7 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
                     break;
                 }
                 case Directions.BOTTOM_LEFT: {
-                    dispatchStickers({
+                    dispatchStickerWrapper({
                         type: StickerReducerActions.RESIZE_STICKER,
                         x: snapToGrid(x),
                         realX: snapToGrid(x),
@@ -334,52 +425,47 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
                     break;
                 }
                 case Directions.BOTTOM_RIGHT: {
-                    dispatchStickers({
+                    dispatchStickerWrapper({
                         type: StickerReducerActions.RESIZE_STICKER,
                         width: snapToGrid(x) - sticker.x,
                         height: snapToGrid(y) - sticker.y,
                         stickerId: stickerBeingDragged.current
-
                     })
                     break;
                 }
                 case Directions.TOP: {
-                    dispatchStickers({
+                    dispatchStickerWrapper({
                         type: StickerReducerActions.RESIZE_STICKER,
                         y: snapToGrid(y),
                         realY: snapToGrid(y),
                         height: resizeAnchorPointY.current - snapToGrid(y),
                         stickerId: stickerBeingDragged.current
-
                     })
                     break;
                 }
                 case Directions.RIGHT: {
-                    dispatchStickers({
+                    dispatchStickerWrapper({
                         type: StickerReducerActions.RESIZE_STICKER,
                         width: snapToGrid(x) - sticker.x,
                         stickerId: stickerBeingDragged.current
-
                     })
                     break;
                 }
                 case Directions.BOTTOM: {
-                    dispatchStickers({
+                    dispatchStickerWrapper({
                         type: StickerReducerActions.RESIZE_STICKER,
                         height: snapToGrid(y) - sticker.y,
                         stickerId: stickerBeingDragged.current
-
                     })
                     break;
                 }
                 case Directions.LEFT: {
-                    dispatchStickers({
+                    dispatchStickerWrapper({
                         type: StickerReducerActions.RESIZE_STICKER,
                         x: snapToGrid(x),
                         realX: snapToGrid(x),
                         width: resizeAnchorPointX.current - snapToGrid(x),
                         stickerId: stickerBeingDragged.current
-
                     })
                     break;
                 }
@@ -387,15 +473,43 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
         }
     }
 
+    const addLinePointToSticker = (stickerId, connectionX, connectionY, lineId, linePoint) => {
+        dispatchStickerWrapper({
+            type: StickerReducerActions.ADD_LINE_CONNECTION,
+            stickerId: stickerId,
+            x: connectionX,
+            y: connectionY,
+            lineId: lineId,
+            linePoint: linePoint
+        });
+        dispatchLines({
+            type: LineReducerActions.EDIT_LINE,
+            lineId: lineId,
+            linePointType: linePoint,
+            point: {x: connectionX, y: connectionY}
+        })
+    }
+
     const mouseUp = (event) => {
         switch (boardState.current) {
             case BoardStates.DRAGGING: {
                 boardState.current = BoardStates.NEURTAL;
-                dispatchStickers({ type: StickerReducerActions.RESET_REAL_SIZE_AND_COORDS });
+                dispatchStickerWrapper({ type: StickerReducerActions.RESET_REAL_SIZE_AND_COORDS });
                 break;
             }
             case BoardStates.EDITING_LINE: {
                 boardState.current = BoardStates.NEURTAL;
+                
+                if (stickerAttachHoverCoords) {
+                    addLinePointToSticker(
+                        stickerAttachHoverCoords.stickerId, 
+                        stickerAttachHoverCoords.x, 
+                        stickerAttachHoverCoords.y, 
+                        lineBeingEditedId.current, 
+                        linePointBeingEditied.current
+                    );
+                    setStickerAttachHoverCoords(null);
+                }
                 lineBeingEditedId.current = null;
                 redraw();
                 break;
@@ -408,8 +522,8 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
                 if (!isDoubleClick) {
                     const newLine = {
                         start: {
-                            x: snapToGrid(drawingStartX.current),
-                            y: snapToGrid(drawingStartY.current)
+                            x: drawingStartX.current,
+                            y: drawingStartY.current
                         },
                         end: {
                             x: snapToGrid(event.clientX - rect.left),
@@ -417,15 +531,48 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
                         },
                         id: getLineId()
                     };
+                    if (newLine.start.x === newLine.end.x && newLine.start.x === newLine.end.x)
+                        return;
+
                     actionHistoryManager.addToHistory(lines, stickers);
                     checkHistory();
+
+                    //attach start of line
+                    if (drawingStartIsAttachedToSticker.current) {
+                        dispatchStickerWrapper({
+                            type: StickerReducerActions.ADD_LINE_CONNECTION,
+                            stickerId: drawingStartAttachedSticker.current,
+                            x: newLine.start.x,
+                            y: newLine.start.y,
+                            lineId: newLine.id,
+                            linePoint: LinePoint.START
+                        });
+                    }
+
+                    //attach end of line
+                    if (stickerAttachHoverCoords) {
+                        if (stickerAttachHoverCoords.stickerId !== drawingStartAttachedSticker.current) {
+                            dispatchStickerWrapper({
+                                type: StickerReducerActions.ADD_LINE_CONNECTION,
+                                stickerId: stickerAttachHoverCoords.stickerId,
+                                x: stickerAttachHoverCoords.x,
+                                y: stickerAttachHoverCoords.y,
+                                lineId: newLine.id,
+                                linePoint: LinePoint.END
+                            });
+                            newLine.end.x = stickerAttachHoverCoords.x;
+                            newLine.end.y = stickerAttachHoverCoords.y;
+                        }
+                        setStickerAttachHoverCoords(null);
+                    }
+                    
                     dispatchLines({ type: LineReducerActions.ADD_LINE, line: newLine });
                 }
                 break;
             }
             case BoardStates.RESIZING_STICKER: {
                 boardState.current = BoardStates.NEURTAL;
-                dispatchStickers({ type: StickerReducerActions.RESET_REAL_SIZE_AND_COORDS });
+                dispatchStickerWrapper({ type: StickerReducerActions.RESET_REAL_SIZE_AND_COORDS });
                 break;
             }
             case BoardStates.CREATE_AND_RESIZE_STICKER: {
@@ -453,7 +600,7 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
         mouseY.current = event.clientY;
         if (boardState.current === BoardStates.DRAGGING) {
             const sticker = stickers.find(s => s.stickerId === stickerBeingDragged.current);
-            dispatchStickers({
+            dispatchStickerWrapper({
                 type: StickerReducerActions.MOVE_STICKER,
                 x: snapToGrid(sticker.realX + moveX),
                 y: snapToGrid(sticker.realY + moveY),
@@ -463,7 +610,7 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
             });
         }
         else if (boardState.current === BoardStates.RESIZING_STICKER) {
-            resizeSticker(event.clientX, event.clientY);
+            resizeSticker(toBoardCoordsX(event.clientX), toBoardCoordsY(event.clientY));
         }
         else if (boardState.current === BoardStates.DRAWING) {
             const rect = canvas.current.getBoundingClientRect();
@@ -478,6 +625,11 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
                     y: snapToGrid(event.clientY - rect.top)
                 }
             });
+            const { stickerId, attachPoint } = CanvisLogicHandler.getStickersToAttachTo(stickers, toBoardCoordsX(event.clientX), toBoardCoordsY(event.clientY));
+            if (attachPoint)
+                setStickerAttachHoverCoords({stickerId: stickerId, x: attachPoint.x, y: attachPoint.y});
+            else 
+                setStickerAttachHoverCoords(null);
         }
         else if (selectedTool === Tools.ERASER) {
             const rect = canvas.current.getBoundingClientRect();
@@ -510,6 +662,11 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
                 linePointType: linePointBeingEditied.current,
                 point: point
             });
+            const { stickerId, attachPoint } = CanvisLogicHandler.getStickersToAttachTo(stickers, canvasCoordsToBoardCoordsX(point.x), canvasCoordsToBoardCoordsY(point.y));
+            if (attachPoint)
+                setStickerAttachHoverCoords({stickerId: stickerId, x: attachPoint.x, y: attachPoint.y});
+            else 
+                setStickerAttachHoverCoords(null);
         }
         else if (boardState.current === BoardStates.CREATE_AND_RESIZE_STICKER_PENDING) {
             const [crossedThreshold, direction] = DirectionUtil.didMousePassThreshold(
@@ -527,17 +684,18 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
 
                 let newSticker = {
                     stickerId: getStickerId(),
-                    x: snapToGrid(stickerX),
-                    y: snapToGrid(stickerY),
-                    realX: stickerX,
-                    realY: stickerY,
+                    x: snapToGrid(toBoardCoordsX(stickerX)),
+                    y: snapToGrid(toBoardCoordsY(stickerY)),
+                    realX: toBoardCoordsX(stickerX),
+                    realY: toBoardCoordsY(stickerY),
                     width: width,
                     height: height,
+                    type: stickerType
                 };
                 stickerBeingDragged.current = newSticker.stickerId;
                 actionHistoryManager.addToHistory(lines, stickers);
                 checkHistory();
-                dispatchStickers({ type: StickerReducerActions.ADD_STICKER, sticker: newSticker });
+                dispatchStickerWrapper({ type: StickerReducerActions.ADD_STICKER, sticker: newSticker });
                 boardState.current = BoardStates.CREATE_AND_RESIZE_STICKER;
             }
         }
@@ -585,8 +743,17 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
         }
         else if (boardState.current !== BoardStates.DRAWING && selectedTool === Tools.PEN) {
             boardState.current = BoardStates.DRAWING;
-            drawingStartX.current = snapToGrid(event.clientX - rect.left);
-            drawingStartY.current = snapToGrid(event.clientY - rect.top);
+            const xCanvasCoord = event.clientX - rect.left;
+            const yCanvasCoord = event.clientY - rect.top;
+            drawingStartX.current = snapToGrid(xCanvasCoord);
+            drawingStartY.current = snapToGrid(yCanvasCoord);
+            const { stickerId, attachPoint } = CanvisLogicHandler.getStickersToAttachTo(stickers, canvasCoordsToBoardCoordsX(xCanvasCoord), canvasCoordsToBoardCoordsX(yCanvasCoord));
+            drawingStartIsAttachedToSticker.current = !!attachPoint;
+            if (attachPoint) {
+                drawingStartAttachedSticker.current = stickerId;
+                drawingStartX.current = attachPoint.x;
+                drawingStartY.current = attachPoint.y;
+            }
         }
         else if (selectedTool === Tools.STICKER) {
             boardState.current = BoardStates.CREATE_AND_RESIZE_STICKER_PENDING;
@@ -599,24 +766,25 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
         actionHistoryManager.clear();
         checkHistory();
         dispatchLines({ type: LineReducerActions.CLEAR_LINES });
-        dispatchStickers({ type: StickerReducerActions.CLEAR_STICKERS });
+        dispatchStickerWrapper({ type: StickerReducerActions.CLEAR_STICKERS });
     }
 
 
     const doubleClick = (event) => {
         let newSticker = {
-            x: snapToGrid(event.clientX),
-            y: snapToGrid(event.clientY),
-            realX: event.clientX,
-            realY: event.clientY
+            x: snapToGrid(toBoardCoordsX(event.clientX)),
+            y: snapToGrid(toBoardCoordsY(event.clientY)),
+            realX: toBoardCoordsX(event.clientX),
+            realY: toBoardCoordsY(event.clientY),
+            type: stickerType
         };
         actionHistoryManager.addToHistory(lines, stickers);
         checkHistory();
-        dispatchStickers({ type: StickerReducerActions.ADD_STICKER, sticker: newSticker });
+        dispatchStickerWrapper({ type: StickerReducerActions.ADD_STICKER, sticker: newSticker });
     }
 
     const changeText = (text, stickerId) => {
-        dispatchStickers({ type: StickerReducerActions.CHANGE_TEXT, text: text, stickerId: stickerId });
+        dispatchStickerWrapper({ type: StickerReducerActions.CHANGE_TEXT, text: text, stickerId: stickerId });
     }
 
     const updateTextHistory = (stickerId, editor) => {
@@ -646,11 +814,11 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
         if (stickersToDelete?.length === 1) {
             actionHistoryManager.addToHistory(lines, stickers);
             checkHistory();
-            dispatchStickers({ type: StickerReducerActions.REMOVE_STICKER, stickerId: stickerId });
+            dispatchStickerWrapper({ type: StickerReducerActions.REMOVE_STICKER, stickerId: stickerId });
         }
     }
 
-    const startResizingSticker = (stickerId, direction, startingX, startingY) => {
+    const startResizingSticker = (stickerId, direction) => {
         actionHistoryManager.addToHistory(lines, stickers);
         checkHistory();
         stickerBeingDragged.current = stickerId;
@@ -663,15 +831,21 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
         resizingDirection.current = direction;
     }
 
-    redrawLines();
+    const getShouldShowStickerAttachHover = (stickerId) => {
+        return stickerAttachHoverCoords && stickerAttachHoverCoords.stickerId === stickerId 
+            && (!drawingStartIsAttachedToSticker.current || stickerAttachHoverCoords.stickerId !== drawingStartAttachedSticker.current);
+    }
+
+    //redrawLines();
     updateFile();
 
     return (
-        <div onClick={onClick} onDoubleClick={doubleClick} onMouseDown={mouseDown} onMouseUp={mouseUp} onMouseMove={mouseMove} className='board'>
+        <div ref={board} onClick={onClick} onDoubleClick={doubleClick} onMouseDown={mouseDown} onMouseUp={mouseUp} onMouseMove={mouseMove} className='board'>
             <canvas height="1000" width="2000" ref={canvas} />
             {stickers.map(sticker =>
                 <Sticker key={sticker.stickerId} setDragging={setDrag} stickerId={sticker.stickerId} xCoord={sticker.x} resizeSticker={startResizingSticker} updateTextHistory={updateTextHistory}
-                    yCoord={sticker.y} text={sticker.text} setText={changeText} selectedTool={selectedTool} deleteSticker={deleteSticker} width={sticker.width} height={sticker.height} />
+                    yCoord={sticker.y} text={sticker.text} setText={changeText} selectedTool={selectedTool} deleteSticker={deleteSticker} width={sticker.width} height={sticker.height} 
+                    type={sticker.type} showAttachHover={getShouldShowStickerAttachHover(sticker.stickerId)} stickerAttachHoverCoords={stickerAttachHoverCoords}/>
             )}
         </div>
     );

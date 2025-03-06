@@ -7,4 +7,5 @@ export default class StickerReducerActions {
     static MOVE_STICKER = 5
     static RESIZE_STICKER = 6
     static RESET_REAL_SIZE_AND_COORDS = 7
+    static ADD_LINE_CONNECTION = 8
 }

@@ -6,10 +6,12 @@ import { textSettingContext } from '../contexts/TextSettingsContext.jsx';
 import Tools from '../enums/Tools.js';
 import Directions from '../enums/Directions.js'
 import TextEditor from './TextEditor.jsx';
+import StickerTypes from '../enums/StickerTypes.js';
+import TableEditor from './TableEditor.jsx';
 
 const STICKER_PADDING = 20;
 
-export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width, height, text, setText, updateTextHistory, selectedTool, deleteSticker, resizeSticker }) {
+export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width, height, text, setText, updateTextHistory, selectedTool, deleteSticker, resizeSticker, type, stickerAttachHoverCoords, showAttachHover }) {
     const [editing, setEditing] = useState(false)
     const textareaRef = useRef(null);
     const [resizeHover, setResizeHover] = useState(false);
@@ -96,7 +98,13 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
     }
 
     setPadding(style);
- 
+    const stickerContent = () => {
+        if (type === StickerTypes.TABLE)
+            return (<TableEditor text={text} ref={textareaRef} readonly={!editing} onEditText={onEditText} updateHistory={updateHistory}/>);
+        else {
+            return (<TextEditor text={text} ref={textareaRef} readonly={!editing} onEditText={onEditText} updateHistory={updateHistory}/>);
+        }
+    }
     return (
         <div onMouseDown={mouseDown} onDoubleClick={doubleClick} style={style} className={className}>
             
@@ -116,9 +124,11 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
                 style={{height: .6 * parseInt(height), top: .2 * parseInt(height)}} onMouseEnter={() => setResizeHover(true)} onMouseLeave={() => setResizeHover(false)}></div>}
             {editing || <div className="resizer bottom" onMouseDown={(event) => clickResizer(event, Directions.BOTTOM)} 
                 style={{width: .6 * parseInt(width), left: .2 * parseInt(width)}} onMouseEnter={() => setResizeHover(true)} onMouseLeave={() => setResizeHover(false)}></div>}
+
+            {showAttachHover && <div className="resizer" style={{left: stickerAttachHoverCoords.x - xCoord - 3, top: stickerAttachHoverCoords.y - yCoord - 3}}/>}
          
-            <TextEditor text={text} ref={textareaRef} readonly={!editing} onEditText={onEditText} updateHistory={updateHistory}/>
             
+            {stickerContent()}
 
         </div>
     );

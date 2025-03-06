@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useContext, useEffect } from 'react';
-import { createEditor, Transforms, Editor, Element as SlateElement } from 'slate'
+import { createEditor, Point, Range, Transforms, Editor, Element as SlateElement } from 'slate'
 import { Slate, Editable, withReact } from 'slate-react'
 import { withHistory, HistoryEditor } from 'slate-history';
 import { textSettingContext } from '../contexts/TextSettingsContext.jsx';
@@ -8,18 +8,20 @@ import TextStyles from '../enums/TextStyles.js';
 const LIST_TYPES = [TextStyles.LIST, TextStyles.NUMBERED_LIST];
 
 
-export default function TextEditor({ readonly, ref, onEditText, text, updateHistory }) {
+export default function TableEditor({ readonly, ref, onEditText, text, updateHistory }) {
     const renderElement = useCallback(props => <Element {...props} />, [])
     const renderLeaf = useCallback(props => <Leaf {...props} />, [])
-    const [editor] = useState(() => withReact(withHistory(createEditor())));
+    const [editor] = useState(() => withTables(withReact(withHistory(createEditor()))));
     const { textSettings, changeHorizontalAlign, setBold, setItalic, setUnderline, setTextStyle, setTextStyleAndListDepth } = useContext(textSettingContext);
 
+    /** 
     useEffect(() => {
         if (!readonly) {
             checkFormatting();
         }
-    }, [readonly])
+    }, [readonly])*/
 
+    /** 
     useEffect(() => {
         if (!readonly) {
             const isList = LIST_TYPES.includes(textSettings.textStyle);
@@ -53,52 +55,78 @@ export default function TextEditor({ readonly, ref, onEditText, text, updateHist
             }
         }
     }, [textSettings]);
+    */
 
-    let initialValue;
-    try {
-        initialValue = JSON.parse(text);
-    }
-    catch (err) { }
-    
-
-    if (!initialValue) {
-        initialValue = !LIST_TYPES.includes(textSettings.textStyle)
-            ? [
+    const initialValue = [
+        {
+          type: 'table',
+          children: [
+            {
+              type: 'table-row',
+              children: [
                 {
-                    type: textSettings.textStyle,
-                    align: textSettings.horizontalAlign,
-                    children: [
-                        {
-                            text: 'Enter text here...',
-                            bold: textSettings.bold,
-                            italic: textSettings.italic,
-                            underline: textSettings.underline
-                        }
-                    ],
+                  type: 'table-cell',
+                  children: [{type:'paragraph', children: [{ text: '' }]}],
                 },
-            ]
-            : [
                 {
-                    type: textSettings.textStyle,
-                    align: textSettings.horizontalAlign,
-                    children: [
-                        {
-                            type: TextStyles.LIST_ITEM,
-                            align: textSettings.horizontalAlign,
-                            children: [
-                                {
-                                    text: 'Enter text here...',
-                                    bold: textSettings.bold,
-                                    italic: textSettings.italic,
-                                    underline: textSettings.underline
-                                }
-                            ],
-                        }
-                    ],
+                  type: 'table-cell',
+                  children: [{type:'paragraph', children: [{ text: 'Human', bold: true }]}],
                 },
-            ];
-    }
-
+                {
+                  type: 'table-cell',
+                  children: [{type:'paragraph', children: [{ text: 'Dog', bold: true }]}],
+                },
+                {
+                  type: 'table-cell',
+                  children: [{type:'paragraph', children: [{ text: 'Cat', bold: true }]}],
+                },
+              ],
+            },
+            {
+              type: 'table-row',
+              children: [
+                {
+                  type: 'table-cell',
+                  children: [{type:'paragraph', children: [{ text: '# of Feet', bold: true }]}],
+                },
+                {
+                  type: 'table-cell',
+                  children: [{type:'paragraph', children: [{ text: '2' }]}],
+                },
+                {
+                  type: 'table-cell',
+                  children: [{type:'paragraph', children: [{ text: '4' }]}],
+                },
+                {
+                  type: 'table-cell',
+                  children: [{type:'paragraph', children: [{ text: '4' }]}],
+                },
+              ],
+            },
+            {
+              type: 'table-row',
+              children: [
+                {
+                  type: 'table-cell',
+                  children: [{type:'paragraph', children: [{ text: '# of Lives', bold: true }]}],
+                },
+                {
+                  type: 'table-cell',
+                  children: [{type:'paragraph', children: [{ text: '1' }]}],
+                },
+                {
+                  type: 'table-cell',
+                  children: [{type:'paragraph', children: [{ text: '1' }]}],
+                },
+                {
+                  type: 'table-cell',
+                  children: [{type:'paragraph', children: [{ text: '9' }]}],
+                },
+              ],
+            },
+          ],
+        },
+    ];
 
 
 
@@ -132,7 +160,7 @@ export default function TextEditor({ readonly, ref, onEditText, text, updateHist
     }
 
     const keyDown = (event) => {
-        checkFormatting();
+        //checkFormatting();
         if (event.ctrlKey) {
             if (event.key === "Backspace" && LIST_TYPES.includes(textSettings.textStyle)) {
                 if (textSettings.listDepth > 1) {
@@ -170,12 +198,121 @@ export default function TextEditor({ readonly, ref, onEditText, text, updateHist
             <Editable ref={ref} readOnly={readonly}
                 renderElement={renderElement}
                 renderLeaf={renderLeaf}
-                onMouseUp={checkFormatting}
+                //onMouseUp={checkFormatting}
                 onKeyDown={keyDown}
                 style={{ height: "100%", overflow: "hidden" }}
             />
         </Slate>
     )
+}
+
+const withTables = editor => {
+    const { deleteBackward, deleteForward, deleteFragment} = editor
+    editor.deleteBackward = unit => {
+        const { selection } = editor
+        if (selection && Range.isCollapsed(selection)) {
+            const [cell] = Editor.nodes(editor, {
+                match: n =>
+                    !Editor.isEditor(n) &&
+                    SlateElement.isElement(n) &&
+                    n.type === 'table-cell',
+            })
+            if (cell) {
+                const [, cellPath] = cell
+                const start = Editor.start(editor, cellPath)
+                if (Point.equals(selection.anchor, start)) {
+                    return
+                }
+            }
+        }
+        deleteBackward(unit)
+    }
+    editor.deleteForward = unit => {
+        const { selection } = editor
+        if (selection && Range.isCollapsed(selection)) {
+            const [cell] = Editor.nodes(editor, {
+                match: n =>
+                    !Editor.isEditor(n) &&
+                    SlateElement.isElement(n) &&
+                    n.type === 'table-cell',
+            })
+            if (cell) {
+                const [, cellPath] = cell
+                const end = Editor.end(editor, cellPath)
+                if (Point.equals(selection.anchor, end)) {
+                    return
+                }
+            }
+        }
+        deleteForward(unit)
+    }
+    editor.deleteFragment = () => {
+        const { selection } = editor
+        if (selection) {
+            console.log(selection)
+            const cells = Array.from(Editor.nodes(editor, {
+                match: n =>
+                    !Editor.isEditor(n) &&
+                    SlateElement.isElement(n) &&
+                    n.type === 'table-cell',
+            }))
+            console.log(cells)
+            for (let cell of cells) {
+                const [, cellPath] = cell;
+                if (
+                    Range.includes(selection, Editor.end(editor, cellPath)) 
+                    && Range.includes(selection, Editor.start(editor, cellPath))
+                ){
+                    /** 
+                    const leaves = Array.from(Editor.nodes(editor, {
+                        match: n =>
+                            !Editor.isEditor(n) &&
+                            !SlateElement.isElement(n)
+                    }));
+                    for (let leaf of leaves) {
+                        const [, leafPath] = leaf;
+                        if (
+                            Range.includes(selection, Editor.end(editor, leafPath)) 
+                            && Range.includes(selection, Editor.start(editor, leafPath))
+                        ){
+                            Transforms.delete(editor, {
+                                at: {
+                                    anchor: Editor.start(editor, leafPath),
+                                    focus: Editor.end(editor, leafPath)
+                                }
+                            });
+                        }
+                    }
+                        */
+                    return;
+                }
+            }
+        }
+        console.log("fragment")
+        deleteFragment();
+    }
+    /** 
+    editor.insertBreak = () => {
+        
+        const { selection } = editor
+        if (selection) {
+            const [table] = Editor.nodes(editor, {
+                match: n =>
+                    !Editor.isEditor(n) &&
+                    SlateElement.isElement(n) &&
+                    n.type === 'table',
+            })
+            
+            if (table) {
+                console.log("table");
+                return
+            }
+        }
+        insertBreak()
+    }
+    */
+
+    return editor
 }
 
 const getListDepth = (editor) => {
@@ -233,6 +370,16 @@ const Element = ({ attributes, children, element }) => {
                     {children}
                 </ol>
             )
+        case 'table':
+            return (
+                <table>
+                    <tbody {...attributes}>{children}</tbody>
+                </table>
+            )
+        case 'table-row':
+            return <tr {...attributes}>{children}</tr>
+        case 'table-cell':
+            return <td {...attributes}>{children}</td>
         default:
             return (
                 <div style={style} {...attributes}>

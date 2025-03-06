@@ -1,7 +1,113 @@
 import LinePoint from '../enums/LinePoint.js'
+import Directions from '../enums/Directions.js';
 
 export default class CanvisLogicHandler {
     static HOVER_RANGE = 15;
+
+    static getNewAttachPoint(oldX, oldY, oldWidth, oldHeight, newX, newY, newWidth, newHeight, x, y) {
+        const direction = this.#getAttachDirection(oldX, oldY, oldWidth, oldHeight, x, y);
+
+        if (direction == Directions.TOP) {
+            x = newX + (x - oldX) * newWidth / oldWidth;
+            y = newY;
+        }
+        else if (direction == Directions.BOTTOM) {
+            x = newX + (x - oldX) * newWidth / oldWidth;
+            y = newY + newHeight;
+        }
+        else if (direction == Directions.RIGHT) {
+            x = newX + newWidth;
+            y = newY + (y - oldY) * newHeight / oldHeight;
+        }
+        else if (direction == Directions.LEFT) {
+            x = newX;
+            y = newY + (y - oldY) * newHeight / oldHeight;
+        }
+        return [x, y];
+    }
+
+    static #getAttachDirection(oldX, oldY, oldWidth, oldHeight, x, y)  {
+        if (x === oldX) return Directions.LEFT;
+        if (x === oldX + oldWidth) return Directions.RIGHT;
+        if (y === oldY) return Directions.TOP;
+        return Directions.BOTTOM;
+    }
+
+    static getStickerAttachPoint(sticker, pointX, pointY) { 
+        const { direction } = this.#getDistanceFromSticker(sticker, pointX, pointY);
+        return this.#getStickerAttachPointFromStickerAndDirection(sticker, pointX, pointY, direction);
+    }
+
+    static getStickersToAttachTo(stickers, pointX, pointY) {
+        let minStickerId;
+        let minDistance;
+        let minAttachPoint;
+
+        for (let sticker of stickers) {
+            if (
+                (Math.abs(sticker.x - pointX) < sticker.width + this.HOVER_RANGE)
+                && (Math.abs(sticker.y - pointY) < sticker.height + this.HOVER_RANGE)
+            ) {
+                const { distance, direction } = this.#getDistanceFromSticker(sticker, pointX, pointY);
+                if (distance < this.HOVER_RANGE && (!minDistance || distance < minDistance)) {
+                    minDistance = distance;
+                    minStickerId = sticker.stickerId;
+                    minAttachPoint = this.#getStickerAttachPointFromStickerAndDirection(sticker, pointX, pointY, direction);
+                }
+            }
+        }
+        return {stickerId: minStickerId, attachPoint: minAttachPoint};
+    }
+
+    static #getStickerAttachPointFromStickerAndDirection({x, y, width, height}, pointX, pointY, direction) { 
+        if (direction === Directions.TOP) {
+            return { x: pointX, y: y };
+        }
+        if (direction === Directions.RIGHT) {
+            return { x: x + width, y: pointY };
+        }
+        if (direction === Directions.BOTTOM) {
+            return { x: pointX, y: y + height };
+        }
+        if (direction === Directions.LEFT) {
+            return { x: x, y: pointY };
+        }
+    }
+
+
+    static #getDistanceFromSticker({x, y, width, height}, pointX, pointY) {
+        const [xCoord1, xCoord2] = [x, x + width];
+        const [yCoord1, yCoord2] = [y, y + height];
+
+        let [distanceLeft, distanceRight] = [Math.abs(xCoord1 - pointX), Math.abs(xCoord2 - pointX)];
+        let [distanceTop, distanceBot] = [Math.abs(yCoord1 - pointY), Math.abs(yCoord2 - pointY)];
+
+        let distance;
+        let minDirection;
+
+        if (xCoord1 <= pointX && pointX <= xCoord2) {
+            if (!distance || distanceTop < distance) {
+                minDirection = Directions.TOP;
+                distance = distanceTop;
+            }
+            if (!distance || distanceBot < distance) {
+                minDirection = Directions.BOTTOM;
+                distance = distanceBot;
+            }
+        }
+        if (yCoord1 <= pointY && pointY <= yCoord2) {
+            if (!distance || distanceLeft < distance) {
+                minDirection = Directions.LEFT;
+                distance = distanceLeft;
+            }
+            if (!distance || distanceRight < distance) {
+                minDirection = Directions.RIGHT;
+                distance = distanceRight;
+            }
+        }
+
+        return {distance: distance, direction: minDirection};
+    }
 
     static checkIfLinePointHover(lines, x, y) {
         for (let line of lines) {
