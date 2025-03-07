@@ -12,220 +12,16 @@ import BoardStates from '../enums/BoardStates.js';
 import Directions from '../enums/Directions.js';
 import DirectionUtil from '../utils/DirectionUtil.js';
 import StickerTypes from '../enums/StickerTypes.js';
-
-let lineId = 0;
-
-const getLineId = () => {
-    lineId += 1;
-    return lineId - 1;
-}
-
-let stickerId = 0;
-
-const getStickerId = () => {
-    stickerId += 1;
-    return stickerId - 1;
-}
-
+import Canvas from './Canvas.jsx';
+import getLineId from "../utils/LineIdGenerator.js";
+import stickerReducer from '../reducers/StickerReducer.js';
+import lineReducer from '../reducers/LineReducer.js';
+import getStickerId from '../utils/StickerIdGenerator.js';
 
 const LINE_POINT_HOVER_CIRCLE_RADIUS = 4;
 const LINE_POINT_EDIT_CIRCLE_RADIUS = 6;
-const DEFAULT_STICKER_HEIGHT = 50;
-const DEFAULT_STICKER_WIDTH = 200;
 
 const MIN_DRAG_TO_CREATE_STICKER = 20;
-
-const setDefaultStickerSize = (newSticker) => {
-    if (newSticker.width === undefined) newSticker.width = DEFAULT_STICKER_WIDTH;
-    if (newSticker.height === undefined) newSticker.height = DEFAULT_STICKER_HEIGHT;
-}
-
-function stickerReducer(state, action) {
-    switch (action.type) {
-        case StickerReducerActions.ADD_STICKER: {
-            if (action.sticker.stickerId === undefined)
-                action.sticker.stickerId = getStickerId();
-            if (action.sticker.type === undefined) 
-                action.sticker.type = StickerTypes.DEFAULT;
-            setDefaultStickerSize(action.sticker);
-            return [...state, action.sticker];
-        }
-        case StickerReducerActions.REMOVE_STICKER: {
-            const newStickers = state.map(s => { return { ...s } });
-            return newStickers.filter(s => s.stickerId !== action.stickerId);
-        }
-        case StickerReducerActions.CHANGE_TEXT: {
-            return state.map(stickerOld => {
-                if (stickerOld.stickerId != action.stickerId) {
-                    return stickerOld;
-                }
-                else {
-                    return { ...stickerOld, text: action.text }
-                }
-            });
-        }
-        case StickerReducerActions.CLEAR_STICKERS: {
-            return [];
-        }
-        case StickerReducerActions.MOVE_STICKER: {
-            return state.map(stickerOld => {
-                if (stickerOld.stickerId != action.stickerId || action.x < 0 || action.y < 0) {
-                    return stickerOld;
-                }
-                else {
-                    let attachedLines = [];
-                    if (stickerOld.attachedLines && action.dispatchLines) {
-                        attachedLines = stickerOld.attachedLines.map(attachedLine => {
-                            let newX = action.x - stickerOld.x + attachedLine.x;
-                            let newY = action.y - stickerOld.y + attachedLine.y;
-                            action.dispatchLines({
-                                type: LineReducerActions.EDIT_LINE,
-                                lineId: attachedLine.id,
-                                linePointType: attachedLine.linePoint,
-                                point: {x: newX, y: newY}
-                            });
-                            return { ...attachedLine, x: newX, y: newY};
-                        });
-                    }
-                    return {
-                        ...stickerOld,
-                        attachedLines: attachedLines,
-                        x: action.x ? action.x : stickerOld.x,
-                        y: action.y ? action.y : stickerOld.y,
-                        realX: action.realX ? action.realX : stickerOld.realX,
-                        realY: action.realY ? action.realY : stickerOld.realY
-                    }
-                }
-            });
-        }
-        case StickerReducerActions.SET_STICKERS: {
-            action.stickers = action.stickers.map(s => {
-                const newSticker = { ...s };
-                setDefaultStickerSize(newSticker);
-                return newSticker;
-            });
-            return action.stickers;
-        }
-        case StickerReducerActions.RESIZE_STICKER: {
-            return state.map(stickerOld => {
-                if (stickerOld.stickerId != action.stickerId) {
-                    return stickerOld;
-                }
-                else {
-                    let attachedLines = [];
-                    if (stickerOld.attachedLines && action.dispatchLines) {
-                        attachedLines = stickerOld.attachedLines.map(attachedLine => {
-                            let [newX, newY] = CanvisLogicHandler.getNewAttachPoint(
-                                stickerOld.x, stickerOld.y, stickerOld.width, stickerOld.height,
-                                action.x ? action.x : stickerOld.x,
-                                action.y ? action.y : stickerOld.y,
-                                action.width ? action.width : stickerOld.width,
-                                action.height ? action.height : stickerOld.height,
-                                attachedLine.x, attachedLine.y
-                            );
-                            action.dispatchLines({
-                                type: LineReducerActions.EDIT_LINE,
-                                lineId: attachedLine.id,
-                                linePointType: attachedLine.linePoint,
-                                point: {x: newX, y: newY}
-                            });
-                            return { ...attachedLine, x: newX, y: newY};
-                        });
-                    }
-                    return {
-                        ...stickerOld,
-                        x: action.x ? action.x : stickerOld.x,
-                        y: action.y ? action.y : stickerOld.y,
-                        realX: action.realX ? action.realX : stickerOld.realX,
-                        realY: action.realY ? action.realY : stickerOld.realY,
-                        height: action.height ? action.height : stickerOld.height,
-                        width: action.width ? action.width : stickerOld.width,
-                        attachedLines: attachedLines
-                    }
-                }
-            });
-        }
-        case StickerReducerActions.RESET_REAL_SIZE_AND_COORDS: {
-            return state.map(stickerOld => {
-                return {
-                    ...stickerOld,
-                    realX: stickerOld.x,
-                    realY: stickerOld.y
-                }
-            })
-        }
-        case StickerReducerActions.ADD_LINE_CONNECTION: {
-            return state.map(stickerOld => {
-                if (action.stickerId !== undefined && action.stickerId === stickerOld.stickerId) {
-                    let attachedLines = [];
-                    if (stickerOld.attachedLines) {
-                        attachedLines = stickerOld.attachedLines.map(line => { return { ...line }; });
-                    }
-                    console.log(attachedLines);
-                    attachedLines.push({
-                        id: action.lineId,
-                        x: action.x,
-                        y: action.y,
-                        linePoint: action.linePoint
-                    });
-                    return { ...stickerOld, attachedLines: attachedLines};
-                }
-                else {
-                    return stickerOld;
-                }
-            });
-        }
-    }
-}
-
-function lineReducer(state, action) {
-    switch (action.type) {
-        case LineReducerActions.ADD_LINE: {
-            return [...state, action.line];
-        }
-        case LineReducerActions.REMOVE_LINE: {
-            const newLines = state.map(l => { return { ...l } });
-            return newLines.filter((l) => l.id !== action.id);
-        }
-        case LineReducerActions.EDIT_LINE: {
-            return state.map(l => {
-                let newLine = { ...l };
-                if (l.id === action.lineId) {
-                    if (action.linePointType === LinePoint.START) {
-                        newLine.start.x = action.point.x;
-                        newLine.start.y = action.point.y;
-                    }
-                    else if (action.linePointType === LinePoint.END) {
-                        newLine.end.x = action.point.x;
-                        newLine.end.y = action.point.y;
-                    }
-                }
-                return newLine;
-            });
-        }
-        case LineReducerActions.CLEAR_LINES: {
-            return [];
-        }
-        case LineReducerActions.SET_LINES: {
-            return action.lines;
-        }
-        case LineReducerActions.HOVER_LINE: {
-            return state.map((l) => {
-                const newLine = { ...l };
-                newLine.hover = l.id === action.id;
-                return newLine;
-            })
-        }
-        case LineReducerActions.RESET_HOVER: {
-            let anyHover = false;
-            const newLines = state.map((l) => {
-                anyHover = anyHover || l.hover;
-                return { ...l, hover: false };
-            });
-            return anyHover ? newLines : state;
-        }
-    }
-}
 
 export default function Board({ ref, checkHistory, useGrid, selectedTool, actionHistoryManager, stickerType }) {
     const GRID_INCREMENT = 25;
@@ -251,11 +47,6 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
     const resizeAnchorPointY = useRef(null);
     const board = useRef(null);
 
-    useEffect(() => {
-        console.log("redraw");
-        redraw();
-    }, [lines]);
-
     const updateFile = useCallback(() => {
         const newFile = FileUtil.getFileObject(lines, stickers);
         window.electronAPI.updateFile(newFile);
@@ -270,9 +61,6 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
         })
 
     }, []);
-
-    const LINE_COLOR = "#583101"
-    const LINE_COLOR_HOVER = "#b0b0b0"
 
     useImperativeHandle(ref, () => {
         return {
@@ -323,37 +111,6 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
         }
         else {
             return coord;
-        }
-    }
-
-    const drawCircle = (x, y, radius) => {
-        const ctx = canvas.current.getContext("2d");
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, 2 * Math.PI);
-        ctx.stroke();
-    }
-
-    const drawLine = (line) => {
-        const ctx = canvas.current.getContext("2d");
-        ctx.beginPath();
-        ctx.moveTo(line.start.x, line.start.y);
-        ctx.lineTo(line.end.x, line.end.y);
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = line.hover ? LINE_COLOR_HOVER : LINE_COLOR;
-        ctx.stroke();
-    }
-
-    const redraw = () => {
-        if (canvas.current) {
-            const ctx = canvas.current.getContext("2d");
-            ctx.clearRect(0, 0, canvas.current.width, canvas.current.height);
-            for (let line of lines) {
-                drawLine(line);
-                if (boardState.current === BoardStates.EDITING_LINE && line.id === lineBeingEditedId.current) {
-                    let point = linePointBeingEditied.current === LinePoint.START ? line.start : line.end;
-                    drawCircle(point?.x, point?.y, LINE_POINT_EDIT_CIRCLE_RADIUS);
-                }
-            }
         }
     }
 
@@ -511,7 +268,7 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
                     setStickerAttachHoverCoords(null);
                 }
                 lineBeingEditedId.current = null;
-                redraw();
+                canvas.current.redraw();
                 break;
             }
             case BoardStates.DRAWING: {
@@ -589,7 +346,7 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
 
     const mouseMove = (event) => {
         if (hoveringLinePoint.current) {
-            redraw();
+            canvas.current.redraw();
             hoveringLinePoint.current = false;
         }
 
@@ -614,8 +371,8 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
         }
         else if (boardState.current === BoardStates.DRAWING) {
             const rect = canvas.current.getBoundingClientRect();
-            redraw();
-            drawLine({
+            canvas.current.redraw();
+            canvas.current.drawLine({
                 start: {
                     x: snapToGrid(drawingStartX.current),
                     y: snapToGrid(drawingStartY.current)
@@ -719,8 +476,8 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
                 hoveringLinePoint.current = hovering;
                 lineBeingEditedId.current = lineId;
                 linePointBeingEditied.current = linePointType;
-                redraw();
-                drawCircle(point.x, point.y, LINE_POINT_HOVER_CIRCLE_RADIUS);
+                canvas.current.redraw();
+                canvas.current.drawCircle(point.x, point.y, LINE_POINT_HOVER_CIRCLE_RADIUS);
             }
         }
     }
@@ -731,7 +488,7 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
             boardState.current = BoardStates.EDITING_LINE;
             actionHistoryManager.addToHistory(lines, stickers);
             checkHistory();
-            redraw();
+            canvas.current.redraw();
             let point;
             for (let line of lines) {
                 if (line.id === lineBeingEditedId.current) {
@@ -739,7 +496,7 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
                     break;
                 }
             }
-            drawCircle(point?.x, point?.y, LINE_POINT_EDIT_CIRCLE_RADIUS);
+            canvas.current.drawCircle(point?.x, point?.y, LINE_POINT_EDIT_CIRCLE_RADIUS);
         }
         else if (boardState.current !== BoardStates.DRAWING && selectedTool === Tools.PEN) {
             boardState.current = BoardStates.DRAWING;
@@ -836,12 +593,11 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
             && (!drawingStartIsAttachedToSticker.current || stickerAttachHoverCoords.stickerId !== drawingStartAttachedSticker.current);
     }
 
-    //redrawLines();
     updateFile();
 
     return (
         <div ref={board} onClick={onClick} onDoubleClick={doubleClick} onMouseDown={mouseDown} onMouseUp={mouseUp} onMouseMove={mouseMove} className='board'>
-            <canvas height="1000" width="2000" ref={canvas} />
+            <Canvas ref={canvas} lines={lines} boardState={boardState} linePointBeingEditied={linePointBeingEditied} lineBeingEditedId={lineBeingEditedId}/>
             {stickers.map(sticker =>
                 <Sticker key={sticker.stickerId} setDragging={setDrag} stickerId={sticker.stickerId} xCoord={sticker.x} resizeSticker={startResizingSticker} updateTextHistory={updateTextHistory}
                     yCoord={sticker.y} text={sticker.text} setText={changeText} selectedTool={selectedTool} deleteSticker={deleteSticker} width={sticker.width} height={sticker.height} 
