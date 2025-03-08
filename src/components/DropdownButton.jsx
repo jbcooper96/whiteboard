@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useRef, useEffect } from 'react';
-import StickerTypes from '../enums/StickerTypes';
+import { StickerTypes } from '../enums/StickerTypes';
 
 export default function DropdownButton({children, className, onClick, title, options, onChange}) {
     const [isOpen, setIsOpen] = useState(false);

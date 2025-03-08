@@ -1,0 +1,11 @@
+enum BoardStates{
+    NEURTAL = 0,
+    DRAGGING,
+    DRAWING,
+    EDITING_LINE,
+    RESIZING_STICKER,
+    CREATE_AND_RESIZE_STICKER,
+    CREATE_AND_RESIZE_STICKER_PENDING
+}
+
+export default BoardStates;

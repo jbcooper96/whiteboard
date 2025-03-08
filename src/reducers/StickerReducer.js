@@ -1,6 +1,8 @@
 import StickerReducerActions from "../enums/StickerReducerActions";
+import LineReducerActions from "../enums/LineReducerActions";
 import getStickerId from "../utils/StickerIdGenerator";
-import StickerTypes from "../enums/StickerTypes";
+import { StickerTypes } from "../enums/StickerTypes";
+import CanvisLogicHandler from "../utils/CanvasLogicHandler";
 
 const DEFAULT_STICKER_HEIGHT = 50;
 const DEFAULT_STICKER_WIDTH = 200;

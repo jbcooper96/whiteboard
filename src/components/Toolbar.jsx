@@ -5,7 +5,7 @@ import Eraser from '../icons/Eraser.jsx';
 import Tools from '../enums/Tools.js';
 import Sticker from '../icons/Sticker.jsx';
 import DropdownButton from './DropdownButton.jsx';
-import StickerTypes from '../enums/StickerTypes.js';
+import { getDropdownOptions } from '../enums/StickerTypes';
 
 export default function Toolbar({selectedTool, setSelectedTool, setStickerType}) {
     const getClassname = (tool) => {
@@ -20,7 +20,7 @@ export default function Toolbar({selectedTool, setSelectedTool, setStickerType})
                 className={getClassname(Tools.STICKER)} 
                 onClick={() => setSelectedTool(Tools.STICKER)} 
                 title="Sticker Tool"
-                options = {StickerTypes.getDropdownOptions()}
+                options = {getDropdownOptions()}
                 onChange={(stickerType) => setStickerType(stickerType)}
             >
                 <Sticker/>

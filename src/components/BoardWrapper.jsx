@@ -5,7 +5,7 @@ import ControlBar from './ControlBar.jsx'
 import Tools from '../enums/Tools.js'
 import ActionHistoryManager from '../utils/ActionHistoryManager.js';
 import {TextSettingsProvider} from '../contexts/TextSettingsContext.jsx';
-import StickerTypes from '../enums/StickerTypes.js';
+import { StickerTypes } from '../enums/StickerTypes';
 
 const actionHistoryManager = new ActionHistoryManager();
 

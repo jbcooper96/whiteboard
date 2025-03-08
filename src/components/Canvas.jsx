@@ -8,7 +8,7 @@ const LINE_COLOR_HOVER = "#b0b0b0"
 
 const LINE_POINT_EDIT_CIRCLE_RADIUS = 6;
 
-export default function Canvas({ lines, ref, boardState, linePointBeingEditied, lineBeingEditedId }) {
+export default function Canvas({ lines, ref, eventManager }) {
     const canvas = useRef(null);
 
     useEffect(() => {
@@ -55,8 +55,8 @@ export default function Canvas({ lines, ref, boardState, linePointBeingEditied, 
             ctx.clearRect(0, 0, canvas.current.width, canvas.current.height);
             for (let line of lines) {
                 drawLine(line);
-                if (boardState.current === BoardStates.EDITING_LINE && line.id === lineBeingEditedId.current) {
-                    let point = linePointBeingEditied.current === LinePoint.START ? line.start : line.end;
+                if (eventManager.eventHandler.lineBeingEditiedId !== undefined && line.id === eventManager.eventHandler.lineBeingEditiedId) {
+                    let point = eventManager.eventHandler.linePointBeingEdited === LinePoint.START ? line.start : line.end;
                     drawCircle(point?.x, point?.y, LINE_POINT_EDIT_CIRCLE_RADIUS);
                 }
             }

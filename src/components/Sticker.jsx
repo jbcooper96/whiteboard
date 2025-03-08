@@ -6,7 +6,7 @@ import { textSettingContext } from '../contexts/TextSettingsContext.jsx';
 import Tools from '../enums/Tools.js';
 import Directions from '../enums/Directions.js'
 import TextEditor from './TextEditor.jsx';
-import StickerTypes from '../enums/StickerTypes.js';
+import { StickerTypes } from '../enums/StickerTypes';
 import TableEditor from './TableEditor.jsx';
 
 const STICKER_PADDING = 20;
