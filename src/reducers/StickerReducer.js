@@ -3,9 +3,8 @@ import LineReducerActions from "../enums/LineReducerActions";
 import getStickerId from "../utils/StickerIdGenerator";
 import { StickerTypes } from "../enums/StickerTypes";
 import CanvisLogicHandler from "../utils/CanvasLogicHandler";
-
-const DEFAULT_STICKER_HEIGHT = 50;
-const DEFAULT_STICKER_WIDTH = 200;
+import Sticker from "../models/Sticker";
+import { DEFAULT_STICKER_HEIGHT, DEFAULT_STICKER_WIDTH } from "../constants";
 
 const setDefaultStickerSize = (newSticker) => {
     if (newSticker.width === undefined) newSticker.width = DEFAULT_STICKER_WIDTH;
@@ -20,7 +19,14 @@ export default function stickerReducer(state, action) {
             if (action.sticker.type === undefined)
                 action.sticker.type = StickerTypes.DEFAULT;
             setDefaultStickerSize(action.sticker);
-            return [...state, action.sticker];
+            console.log(action.sticker);
+            return [
+                ...state, 
+                new Sticker(
+                    action.sticker.stickerId, action.sticker.x, action.sticker.y, action.sticker.realX, action.sticker.realY, 
+                    action.sticker.width, action.sticker.height, action.sticker.type
+                )
+            ];
         }
         case StickerReducerActions.REMOVE_STICKER: {
             const newStickers = state.map(s => { return { ...s } });

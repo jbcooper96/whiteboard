@@ -1,12 +1,7 @@
 import React from 'react';
 import { useRef, useEffect, useImperativeHandle } from 'react';
-import BoardStates from '../enums/BoardStates';
 import LinePoint from '../enums/LinePoint';
-
-const LINE_COLOR = "#583101"
-const LINE_COLOR_HOVER = "#b0b0b0"
-
-const LINE_POINT_EDIT_CIRCLE_RADIUS = 6;
+import { LINE_COLOR, LINE_COLOR_HOVER, LINE_POINT_EDIT_CIRCLE_RADIUS} from '../constants';
 
 export default function Canvas({ lines, ref, eventManager }) {
     const canvas = useRef(null);

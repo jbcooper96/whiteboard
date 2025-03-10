@@ -16,11 +16,7 @@ import lineReducer from '../reducers/LineReducer.js';
 import getStickerId from '../utils/StickerIdGenerator.js';
 import BoardEvent from '../eventhandlers/BoardEvent';
 import EventHandlersManager from '../eventhandlers/EventHandlersManager';
-
-const LINE_POINT_HOVER_CIRCLE_RADIUS = 4;
-const LINE_POINT_EDIT_CIRCLE_RADIUS = 6;
-
-const MIN_DRAG_TO_CREATE_STICKER = 20;
+import { LINE_POINT_HOVER_CIRCLE_RADIUS, LINE_POINT_EDIT_CIRCLE_RADIUS } from '../constants';
 
 const eventManager = new EventHandlersManager();
 
@@ -140,6 +136,7 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
     const mouseUp = (event) => {
         const boardEvent = createBoardEvent(event.clientX, event.clientY);
         eventManager.mouseUp(boardEvent);
+        drawingStartIsAttachedToSticker.current = false;
     }
 
     const mouseMove = (event) => {
@@ -176,7 +173,7 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
             }
 
         }
-        else {
+        else if (eventManager.eventHandler.lineBeingEditiedId === undefined) {
             const rect = canvas.current.getBoundingClientRect();
             const { hovering, lineId, point, linePointType } = CanvisLogicHandler.checkIfLinePointHover(lines, event.clientX - rect.left, event.clientY - rect.top);
             if (hovering) {
