@@ -1,11 +1,10 @@
 import React from 'react';
 import { useState, useRef, useEffect } from 'react';
-import { StickerTypes } from '../enums/StickerTypes';
 
-export default function DropdownButton({children, className, onClick, title, options, onChange}) {
+export default function DropdownButton({children, className, onClick, title, options, onChange, active, defaultValue}) {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
-    const [selected, setSelected] = useState(StickerTypes.DEFAULT);
+    const [selected, setSelected] = useState(defaultValue);
     
     const handleSelect = (option) => {
         setIsOpen(false);
@@ -27,25 +26,38 @@ export default function DropdownButton({children, className, onClick, title, opt
         };
     }, []);
 
-    const classNameNullchecked = className ? className : "";
+    const activeClassname = active ? "active" : "";
 
     const toggleOpen = (event) => {
         event.stopPropagation();
         setIsOpen(!isOpen);
     }
 
+    const clickHandler = (event) => {
+        if (active) {
+            toggleOpen(event);
+        }
+        else {
+            onClick(event);
+        }
+    }
+
+    console.log(options);
+
     return (
-        <button className={"dropdown-button " + classNameNullchecked} onClick={onClick} title={title}>
+        <button className={"dropdown-button " + activeClassname} onClick={clickHandler} title={title}>
             {children}
             <span onClick={toggleOpen} className={`arrow ${isOpen ? "up" : "down"}`}></span>
             {isOpen && (
                 <ul ref={dropdownRef} className="dropdown">
                     {options.map((option) => {
                         if (option.id == selected) return (<li className="selected-option" key={option.id} onClick={() => handleSelect(option.id)}>
-                            {option.label}
+                            {option.icon || option.label}
+                            {option.icon && option.icon()}
                         </li>);
                         else return (<li key={option.id} onClick={() => handleSelect(option.id)}>
-                            {option.label}
+                            {option.icon || option.label}
+                            {option.icon && option.icon()}
                         </li>);
                     })}
                 </ul>

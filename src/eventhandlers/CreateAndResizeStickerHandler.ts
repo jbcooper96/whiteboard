@@ -68,7 +68,7 @@ export default class CreateAndResizeStickerHandler implements EventHandler {
                         event.toBoardCoordsY(options.stickerY),
                         options.width,
                         options.height,
-                        StickerTypes.DEFAULT
+                        event.stickerType
                     );
                     this.stickerBeingResized = newSticker.stickerId;
                     event.history();

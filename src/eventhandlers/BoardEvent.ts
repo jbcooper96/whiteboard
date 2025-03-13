@@ -1,5 +1,7 @@
 import Sticker from '../models/Sticker';
 import Line from '../models/Line';
+import { StickerTypes } from '../enums/StickerTypes';
+import LineTypes from '../enums/LineTypes';
 
 export default class BoardEvent {
     dispatchStickers: Function;
@@ -21,13 +23,15 @@ export default class BoardEvent {
     mouseY: number;
     moveX: number;
     moveY: number;
+    stickerType: StickerTypes;
+    lineType: LineTypes;
     stickerAttachHoverCoords: {x: number, y: number, stickerId: number} | undefined;
 
     constructor(
         dispatchStickers: Function, dispatchLines: Function, getBoundingClientRect: Function, drawLine: Function, drawCircle: Function, 
         redraw: Function, snapToGrid: Function, setStickerAttachHoverCoords: Function, toBoardCoordsX: Function, toBoardCoordsY: Function, 
         history: Function, canvasCoordsToBoardCoordsX: Function, canvasCoordsToBoardCoordsY: Function, lines: Line[], stickers: Sticker[], 
-        mouseX: number, mouseY: number, moveX: number, moveY: number, stickerAttachHoverCoords: {x: number, y: number, stickerId: number} 
+        mouseX: number, mouseY: number, moveX: number, moveY: number, stickerType: StickerTypes, lineType: LineTypes, stickerAttachHoverCoords: {x: number, y: number, stickerId: number} 
     ) {
         this.dispatchStickers = dispatchStickers;
         this.dispatchLines = dispatchLines;
@@ -48,6 +52,8 @@ export default class BoardEvent {
         this.mouseY = mouseY;
         this.moveX = moveX;
         this.moveY = moveY;
+        this.stickerType = stickerType;
+        this.lineType = lineType;
         this.stickerAttachHoverCoords = stickerAttachHoverCoords;
     }
 }

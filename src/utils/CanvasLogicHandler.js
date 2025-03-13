@@ -1,8 +1,47 @@
 import LinePoint from '../enums/LinePoint.js'
 import Directions from '../enums/Directions.js';
 
+const ARROW_ANGLE = .5;
+
+
 export default class CanvisLogicHandler {
     static HOVER_RANGE = 15;
+    static ARROW_LENGTH = 12;
+
+    static getArrowPointsForLine(line) {
+        const lineLength = Math.sqrt(Math.pow(line.start.x - line.end.x, 2) + Math.pow(line.start.y - line.end.y, 2));
+        const reverseLineVectorNormalized = [
+            (line.start.x - line.end.x) / lineLength,
+            (line.start.y - line.end.y) / lineLength
+        ];
+        const reverseLineVectorArrowLength = reverseLineVectorNormalized.map(x => x * this.ARROW_LENGTH);
+        
+        const cos = Math.cos(ARROW_ANGLE);
+        const sin = Math.sin(ARROW_ANGLE);
+
+        const rotationMatrix1 = [
+            [cos, -sin], 
+            [sin, cos]
+        ];
+        const rotationMatrix2 = [
+            [cos, sin], 
+            [-sin, cos]
+        ];
+
+        const rotatedVector1 = rotationMatrix1.map(list => list[0] * reverseLineVectorArrowLength[0] + list[1] * reverseLineVectorArrowLength[1]);
+        const rotatedVector2 = rotationMatrix2.map(list => list[0] * reverseLineVectorArrowLength[0] + list[1] * reverseLineVectorArrowLength[1]);
+
+        return [
+            {
+                x: rotatedVector1[0] + line.end.x,
+                y: rotatedVector1[1] + line.end.y
+            },
+            {
+                x: rotatedVector2[0] + line.end.x,
+                y: rotatedVector2[1] + line.end.y
+            }
+        ];
+    }
 
     static getNewAttachPoint(oldX, oldY, oldWidth, oldHeight, newX, newY, newWidth, newHeight, x, y) {
         const direction = this.#getAttachDirection(oldX, oldY, oldWidth, oldHeight, x, y);

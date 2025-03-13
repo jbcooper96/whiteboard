@@ -155,15 +155,27 @@ body {
 
 
 .sticker {
-  border: solid;
-  border-width: .5px;
-  border-color: #e7bc91;
   padding: 20px;
   box-sizing: border-box;
   position: absolute;
   cursor: pointer;
   background-color: #f3d5b5;
   box-shadow: .25px .25px 10px #583101;
+}
+
+.sticker.text-box {
+  background-color: initial;
+  box-shadow: initial;
+  border: solid;
+  border-width:0;
+  transition-property: border-width;
+  transition-delay: 1s;
+  &:hover {
+    border-width: .5px;
+    transition-property: border-width;
+    border-color: #583101;
+    transition-delay: 0s;
+  }
 }
 
 table, th, td {

@@ -7,7 +7,7 @@ import Tools from '../enums/Tools.js';
 import Directions from '../enums/Directions.js'
 import TextEditor from './TextEditor.jsx';
 import { StickerTypes } from '../enums/StickerTypes';
-import TableEditor from './TableEditor.jsx';
+import TableEditor from './TableEditor';
 
 const STICKER_PADDING = 20;
 
@@ -59,7 +59,12 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
         setEditing(false)
     }
 
-    const className = editing ? "sticker editing" : "sticker noselect noedit"
+    let className = editing ? "sticker editing" : "sticker noselect noedit"
+
+    if (type === StickerTypes.TEXTBOX) {
+        className += " text-box";
+    }
+
     const showResize = () => {
         return !editing && resizeHover;
     }
@@ -100,7 +105,7 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
     setPadding(style);
     const stickerContent = () => {
         if (type === StickerTypes.TABLE)
-            return (<TableEditor text={text} ref={textareaRef} readonly={!editing} onEditText={onEditText} updateHistory={updateHistory}/>);
+            return (<TableEditor text={text} readonly={!editing} onEditText={onEditText} updateHistory={updateHistory}/>);
         else {
             return (<TextEditor text={text} ref={textareaRef} readonly={!editing} onEditText={onEditText} updateHistory={updateHistory}/>);
         }

@@ -1,7 +1,9 @@
 import React from 'react';
 import { useRef, useEffect, useImperativeHandle } from 'react';
 import LinePoint from '../enums/LinePoint';
+import CanvisLogicHandler from '../utils/CanvasLogicHandler';
 import { LINE_COLOR, LINE_COLOR_HOVER, LINE_POINT_EDIT_CIRCLE_RADIUS} from '../constants';
+import LineTypes from '../enums/LineTypes';
 
 export default function Canvas({ lines, ref, eventManager }) {
     const canvas = useRef(null);
@@ -35,10 +37,16 @@ export default function Canvas({ lines, ref, eventManager }) {
     }
 
     const drawLine = (line) => {
+        const [arrowPoint1, arrowPoint2] = CanvisLogicHandler.getArrowPointsForLine(line);
         const ctx = canvas.current.getContext("2d");
         ctx.beginPath();
         ctx.moveTo(line.start.x, line.start.y);
         ctx.lineTo(line.end.x, line.end.y);
+        if (line.type === LineTypes.ARROW) {
+            ctx.lineTo(arrowPoint1.x, arrowPoint1.y);
+            ctx.lineTo(line.end.x, line.end.y);
+            ctx.lineTo(arrowPoint2.x, arrowPoint2.y);
+        }
         ctx.lineWidth = 1;
         ctx.strokeStyle = line.hover ? LINE_COLOR_HOVER : LINE_COLOR;
         ctx.stroke();

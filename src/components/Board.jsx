@@ -8,6 +8,7 @@ import LineReducerActions from '../enums/LineReducerActions.js';
 import StickerReducerActions from '../enums/StickerReducerActions.js';
 import CanvisLogicHandler from '../utils/CanvasLogicHandler.js';
 import BoardStates from '../enums/BoardStates';
+import debounce from '../utils/Debounce.js';
 import DirectionUtil from '../utils/DirectionUtil.js';
 import Canvas from './Canvas.jsx';
 import getLineId from "../utils/LineIdGenerator.js";
@@ -20,7 +21,7 @@ import { LINE_POINT_HOVER_CIRCLE_RADIUS, LINE_POINT_EDIT_CIRCLE_RADIUS } from '.
 
 const eventManager = new EventHandlersManager();
 
-export default function Board({ ref, checkHistory, useGrid, selectedTool, actionHistoryManager, stickerType }) {
+export default function Board({ ref, checkHistory, useGrid, selectedTool, actionHistoryManager, stickerType, lineType }) {
     const GRID_INCREMENT = 25;
     const [stickers, dispatchStickers] = useReducer(stickerReducer, []);
     const [lines, dispatchLines] = useReducer(lineReducer, []);
@@ -129,7 +130,7 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
             dispatchStickerWrapper, dispatchLines, canvas.current.getBoundingClientRect, canvas.current.drawLine, 
             canvas.current.drawCircle, canvas.current.redraw, snapToGrid, setStickerAttachHoverCoords, toBoardCoordsX, 
             toBoardCoordsY, historyCheckin, canvasCoordsToBoardCoordsX, canvasCoordsToBoardCoordsY, lines, stickers, 
-            clientX, clientY, moveX, moveY, stickerAttachHoverCoords
+            clientX, clientY, moveX, moveY, stickerType, lineType, stickerAttachHoverCoords
         );
     }
 
@@ -139,21 +140,11 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
         drawingStartIsAttachedToSticker.current = false;
     }
 
-    const mouseMove = (event) => {
+    const checkHover = debounce((event) => {
         if (hoveringLinePoint.current) {
             canvas.current.redraw();
             hoveringLinePoint.current = false;
         }
-
-        let moveX = event.clientX - mouseX.current;
-        let moveY = event.clientY - mouseY.current;
-
-        mouseX.current = event.clientX;
-        mouseY.current = event.clientY;
-
-        const boardEvent = createBoardEvent(event.clientX, event.clientY, moveX, moveY);
-        eventManager.mouseMove(boardEvent);
-
         if (selectedTool === Tools.ERASER) {
             const rect = canvas.current.getBoundingClientRect();
             let anyHover = false;
@@ -184,6 +175,19 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
                 canvas.current.drawCircle(point.x, point.y, LINE_POINT_HOVER_CIRCLE_RADIUS);
             }
         }
+    }, 200)
+
+    const mouseMove = (event) => {
+        let moveX = event.clientX - mouseX.current;
+        let moveY = event.clientY - mouseY.current;
+
+        mouseX.current = event.clientX;
+        mouseY.current = event.clientY;
+
+        const boardEvent = createBoardEvent(event.clientX, event.clientY, moveX, moveY);
+        eventManager.mouseMove(boardEvent);
+
+        checkHover(event);
     }
 
     const mouseDown = (event) => {

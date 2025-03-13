@@ -38,7 +38,9 @@ export default class DrawingHandler implements EventHandler {
                 new Point(
                     event.snapToGrid(event.mouseX - rect.left),
                     event.snapToGrid(event.mouseY - rect.top)
-                )
+                ),
+                false,
+                event.lineType
             );
             if (newLine.start.x === newLine.end.x && newLine.start.x === newLine.end.x)
                 return BoardStates.NEURTAL;
@@ -89,7 +91,8 @@ export default class DrawingHandler implements EventHandler {
             end: {
                 x: event.snapToGrid(event.mouseX - rect.left),
                 y: event.snapToGrid(event.mouseY - rect.top)
-            }
+            },
+            type: event.lineType
         });
         const { stickerId, attachPoint } = CanvisLogicHandler.getStickersToAttachTo(event.stickers, event.toBoardCoordsX(event.mouseX), event.toBoardCoordsY(event.mouseY));
         if (attachPoint) {

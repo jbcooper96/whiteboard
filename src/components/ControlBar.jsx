@@ -6,7 +6,7 @@ import Backward from '../icons/Backward.jsx';
 import Toolbar from './Toolbar.jsx';
 import TextSettings from './TextSettings.jsx';
 
-export default function ControlBar({canGoBackward, canGoForward, clear, forward, backward, useGrid, toggleSnapToGrid, selectedTool, setSelectedTool, setStickerType}) {
+export default function ControlBar({canGoBackward, canGoForward, clear, forward, backward, useGrid, toggleSnapToGrid, selectedTool, setSelectedTool, setStickerType, setLineType}) {
 
     return (
         <div className='control-bar'>
@@ -21,7 +21,7 @@ export default function ControlBar({canGoBackward, canGoForward, clear, forward,
             {useGrid ? <button className="active" title="Toggle Grid" onClick={toggleSnapToGrid}><Grid/></button>
             : <button title="Toggle Grid" onClick={toggleSnapToGrid}><Grid/></button>}
 
-            <Toolbar setStickerType={setStickerType} selectedTool={selectedTool} setSelectedTool={setSelectedTool}/>
+            <Toolbar setStickerType={setStickerType} selectedTool={selectedTool} setSelectedTool={setSelectedTool} setLineType={setLineType}/>
 
             <TextSettings/>
         </div>

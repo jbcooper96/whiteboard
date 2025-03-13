@@ -1,13 +1,17 @@
-import { useCallback } from "react";
-import React from "react"
-
-export default function useDebouncedCallback(callback, delay) {
-    let timeoutId;
-
-    return useCallback((...args) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-            callback(...args);
-        }, delay);
-    }, [callback, delay]);
+export default function debounce(func, time) {
+    let timeout;
+    let start = Date.now();
+    return function(...args) {
+        clearTimeout(timeout);
+        if (Date.now() -start >= time) {
+            start = Date.now();
+            func(...args);
+        }
+        else {
+            timeout = setTimeout(() => {
+                start = Date.now();
+                func(...args);
+            }, time);
+        }
+    }
 }
