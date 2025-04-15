@@ -2,6 +2,7 @@ import Actions from '../enums/Actions.js';
 import LineReducerActions from '../enums/LineReducerActions.js';
 import StickerReducerActions from '../enums/StickerReducerActions.js';
 import { HistoryEditor } from 'slate-history';
+import LineTypes from '../enums/LineTypes';
 
 
 class HistoryItemTypes {
@@ -20,7 +21,8 @@ export default class ActionHistoryManager {
             return {
                 start: {x: line.start.x, y: line.start.y},
                 end: {x: line.end.x, y: line.end.y},
-                id: line.id
+                id: line.id,
+                type: line.type ? line.type : LineTypes.DEFAULT
             }
         });
         const stickersCopy = stickers.map(sticker => {return {...sticker}});

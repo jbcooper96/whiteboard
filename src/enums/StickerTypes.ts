@@ -7,7 +7,7 @@ export enum StickerTypes {
 export function getDropdownOptions() {
     return [
         {id: StickerTypes.DEFAULT, label: "Empty"},
-        {id: StickerTypes.TABLE, label: "Table"},
+        //{id: StickerTypes.TABLE, label: "Table"},
         {id: StickerTypes.TEXTBOX, label: "Text Box"}
     ];
 }
