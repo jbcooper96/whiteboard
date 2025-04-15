@@ -6,28 +6,46 @@
 
 }
 
+:root {
+  --color-light: #ffedd8;
+  --color-medium: #e7bc91;
+  --color-dark: #583101;
+  --sticker-color: #f3d5b5;
+  --button-hover-color: #a47148;
+}
+
+/**
+:root {
+  --color-light: #FFE6E8;
+  --color-medium: #F2CCC3;
+  --color-dark: #E78F8E;
+  --sticker-color: #E78F8E;
+  --button-hover-color: #E78F8E;
+}
+  */
+
 
 body {
   font-family: "Roboto", sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #ffedd8;
-  color:#583101;
+  background-color: var(--color-light);
+  color: var(--color-dark);
   position: relative;
 }
 
 .control-bar {
   height: 36px;
-  background-color: #e7bc91;
+  background-color: var(--color-medium);
   border-style: solid;
   border-width: 1px;
-  box-shadow: 0px .25px 10px #583101;
+  box-shadow: 0px .25px 10px var(--color-dark);
   display: flex;
 }
 
 .tool-bar {
   margin-left: 1.25rem;
-  /**box-shadow: -.25px 0px 10px #583101;*/
+  /**box-shadow: -.25px 0px 10px var(--color-dark);*/
 }
 
 .text-tool-bar {
@@ -50,11 +68,11 @@ body {
 }
 
 .selected-option {
-  box-shadow: inset 0 0 12px #a47148;
+  box-shadow: inset 0 0 12px var(--button-hover-color);
 }
 
 .selected-option:hover {
-  box-shadow: inset 0 0 12px #a47148;
+  box-shadow: inset 0 0 12px var(--button-hover-color);
 }
 
 .arrow {
@@ -63,8 +81,8 @@ body {
   position: absolute;
   width: 5px;
   height: 5px;
-  border-left: 2px solid #583101;
-  border-bottom: 2px solid #583101;
+  border-left: 2px solid var(--color-dark);
+  border-bottom: 2px solid var(--color-dark);
   transform: rotate(-45deg);
   transition: transform 0.2s ease-in-out;
 }
@@ -78,7 +96,7 @@ body {
   padding: 0;
   left: 0;
   margin: 10px 0 0;
-  background: #e7bc91;
+  background: var(--color-medium);
   position: absolute;
   width: 100%;
   min-width: 110px;
@@ -94,7 +112,7 @@ body {
 }
 
 .dropdown li:hover {
-  box-shadow: inset 0 0 12px #a47148;
+  box-shadow: inset 0 0 12px var(--button-hover-color);
 }
 
 .text-tool-bar .alignment-tools button {
@@ -117,17 +135,17 @@ body {
   height: 36px;
   width:44px;
   border: none;
-  background-color: #e7bc91;
-  color: #583101;
+  background-color: var(--color-medium);
+  color: var(--color-dark);
   cursor: pointer;
 }
 
 .control-bar button.active {
-  box-shadow: inset 0 0 12px #a47148;
+  box-shadow: inset 0 0 12px var(--button-hover-color);
 }
 
 .control-bar button:hover {
-  box-shadow: inset 0 0 12px #a47148;
+  box-shadow: inset 0 0 12px var(--button-hover-color);
 }
 
 .control-bar button:disabled {
@@ -159,8 +177,8 @@ body {
   box-sizing: border-box;
   position: absolute;
   cursor: pointer;
-  background-color: #f3d5b5;
-  box-shadow: .25px .25px 10px #583101;
+  background-color: var(--sticker-color);
+  box-shadow: .25px .25px 10px var(--color-dark);
 }
 
 .sticker.text-box {
@@ -173,7 +191,7 @@ body {
   &:hover {
     border-width: .5px;
     transition-property: border-width;
-    border-color: #583101;
+    border-color: var(--color-dark);
     transition-delay: 0s;
   }
 }
@@ -212,7 +230,7 @@ table {
 }
 
 .editing {
-  box-shadow: inset .1px .1px 10px #583101;
+  box-shadow: inset .1px .1px 10px var(--color-dark);
 }
 
 .sticker p {
@@ -238,7 +256,7 @@ table {
   font-size: inherit;
   margin: 0;
   padding: 0;
-  background-color: #f3d5b5;
+  background-color: var(--sticker-color);
   display: flex;
   z-index: 1000
 }
@@ -248,7 +266,7 @@ table {
   height: 6px;
   border-radius: 50%; 
   background: white;
-  border: 2px solid #583101;
+  border: 2px solid var(--color-dark);
   position: absolute;
 }
 
