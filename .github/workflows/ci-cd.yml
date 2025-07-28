@@ -25,7 +25,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/webapp-demo-ma'
+    if: github.ref == 'refs/heads/webapp-demo-main'
     steps:
       - uses: actions/download-artifact@v4
         with:
