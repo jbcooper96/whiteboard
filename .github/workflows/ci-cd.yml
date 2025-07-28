@@ -1,0 +1,37 @@
+name: CI/CD Vite React App
+
+on:
+  push:
+    branches: [ webapp-demo-main ]
+  pull_request:
+    branches: [ webapp-demo-main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: npm install
+      - run: npm test --if-present
+      - run: npm run build
+      - uses: actions/upload-artifact@v3
+        with:
+          name: build-files
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: build-files
+          path: ./dist
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
