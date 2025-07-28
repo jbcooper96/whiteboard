@@ -9,6 +9,7 @@ import EditingLineHandler from './EditingLineHandler';
 import LinePoint from '../enums/LinePoint';
 import DrawingHandler from './DrawingHandler';
 import DraggingHandler from './DraggingHandler';
+import DebouncedHandler from './debouncedHandler';
 
 
 export default class EventHandlersManager {
@@ -39,7 +40,10 @@ export default class EventHandlersManager {
     }
 
     resizeSticker(resizeAnchorPointX: number, resizeAnchorPointY: number, stickerBeingResized: number, resizingDirection: Directions) {
-        this.eventHandler = new ResizingStickerHandler(resizeAnchorPointX, resizeAnchorPointY, stickerBeingResized, resizingDirection);
+        this.eventHandler = this.eventHandler = new DebouncedHandler(
+            new ResizingStickerHandler(resizeAnchorPointX, resizeAnchorPointY, stickerBeingResized, resizingDirection),
+            BoardStates.RESIZING_STICKER
+        );
     }
 
     editLine(lineBeingEditiedId: number, linePointBeingEdited: LinePoint) {
@@ -51,6 +55,6 @@ export default class EventHandlersManager {
     }
 
     startDragging(stickerBeingDrragged: number) {
-        this.eventHandler = new DraggingHandler(stickerBeingDrragged);
+        this.eventHandler = new DebouncedHandler(new DraggingHandler(stickerBeingDrragged), BoardStates.DRAGGING);
     }
 }

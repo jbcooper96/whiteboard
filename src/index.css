@@ -43,6 +43,12 @@ body {
   display: flex;
 }
 
+.board-wrapper {
+  overflow: scroll;
+  display: flex;
+  height: calc(100% - 37.66px);
+}
+
 .tool-bar {
   margin-left: 1.25rem;
   /**box-shadow: -.25px 0px 10px var(--color-dark);*/

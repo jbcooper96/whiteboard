@@ -37,6 +37,9 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
 
 
     const mouseDown = (event) => {
+        if (selectedTool === Tools.PAN)
+            return;
+        
         if (selectedTool === Tools.ERASER) {
             deleteSticker(stickerId);
         }
@@ -47,8 +50,10 @@ export default function Sticker({ setDragging, stickerId, xCoord, yCoord, width,
     }
 
     const doubleClick = (event) => {
-        setEditing(!editing);
-        event.stopPropagation();
+        if (selectedTool !== Tools.PAN) {
+            setEditing(!editing);
+            event.stopPropagation();
+        }
     }
 
     if (editing && textareaRef.current) {

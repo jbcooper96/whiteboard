@@ -19,7 +19,6 @@ export default function stickerReducer(state, action) {
             if (action.sticker.type === undefined)
                 action.sticker.type = StickerTypes.DEFAULT;
             setDefaultStickerSize(action.sticker);
-            console.log(action.sticker);
             return [
                 ...state, 
                 new Sticker(
@@ -139,7 +138,6 @@ export default function stickerReducer(state, action) {
                     if (stickerOld.attachedLines) {
                         attachedLines = stickerOld.attachedLines.map(line => { return { ...line }; });
                     }
-                    console.log(attachedLines);
                     attachedLines.push({
                         id: action.lineId,
                         x: action.x,

@@ -42,8 +42,6 @@ export default function DropdownButton({children, className, onClick, title, opt
         }
     }
 
-    console.log(options);
-
     return (
         <button className={"dropdown-button " + activeClassname} onClick={clickHandler} title={title}>
             {children}

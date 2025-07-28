@@ -51,7 +51,6 @@ export default class ActionHistoryManager {
     }
 
     addTextChangeToHistory(editor, stickerId=null) {
-        console.log("addTextChangeToHistory");
         if (this.#history.length === 0 || this.#history[this.#history.length - 1].stickerId !== stickerId) {
             this.#history.push({
                 stickerId: stickerId,
@@ -86,8 +85,6 @@ export default class ActionHistoryManager {
             }
             else {
                 HistoryEditor.undo(lastAction.editor);
-                console.log(lastAction.editor.history.undos.length);
-                console.log(lastAction.startUndoLength);
                 if (lastAction.editor.history.undos.length > lastAction.startUndoLength) {
                     this.#history.push(lastAction);
                 }
@@ -115,8 +112,6 @@ export default class ActionHistoryManager {
             }
             else {
                 HistoryEditor.redo(lastAction.editor);
-                console.log(lastAction.editor.history.redos.length);
-                console.log(lastAction.startRedoLength);
                 if (lastAction.editor.history.redos.length > lastAction.startRedoLength) {
                     this.#undoneActions.push(lastAction);
                 }

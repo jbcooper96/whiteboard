@@ -33,7 +33,7 @@ export default class CreateAndResizeStickerHandler implements EventHandler {
             if (sticker) {
                 this.resizingDirection = DirectionUtil.getDirectionFromPoints(
                     [this.resizeAnchorPointX, this.resizeAnchorPointY],
-                    [event.mouseX, event.mouseY]
+                    [event.toBoardCoordsX(event.mouseX), event.toBoardCoordsY(event.mouseY)]
                 );
     
                 let options = {};
@@ -41,13 +41,13 @@ export default class CreateAndResizeStickerHandler implements EventHandler {
                     options = DirectionUtil.getResizeOptionsFromDirectionChange(this.prevDirection, this.resizingDirection);
                     this.prevDirection = this.resizingDirection;
                 }
-                resizeSticker(this, event, sticker, event.mouseX, event.mouseY, options);
+                resizeSticker(this, event, sticker, event.toBoardCoordsX(event.mouseX), event.toBoardCoordsY(event.mouseY), options);
             }
         }
         else {
             const [crossedThreshold, direction] = DirectionUtil.didMousePassThreshold(
                 [this.resizeAnchorPointX, this.resizeAnchorPointY],
-                [event.mouseX, event.mouseX],
+                [event.toBoardCoordsX(event.mouseX), event.toBoardCoordsY(event.mouseX)],
                 MIN_DRAG_TO_CREATE_STICKER
             );
 
@@ -57,7 +57,7 @@ export default class CreateAndResizeStickerHandler implements EventHandler {
                 this.prevDirection = direction;
                 const options = DirectionUtil.getDraggedStickerCoordsFromDirectionAndMouseMovement(
                     [this.resizeAnchorPointX, this.resizeAnchorPointY],
-                    [event.mouseX, event.mouseY], direction);
+                    [event.toBoardCoordsX(event.mouseX), event.toBoardCoordsY(event.mouseY)], direction);
 
                 if (options) {
                     let newSticker = new Sticker(

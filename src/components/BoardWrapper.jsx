@@ -18,6 +18,7 @@ export default function BoardWrapper() {
     const [stickerType, setStickerType] = useState(StickerTypes.DEFAULT);
     const [lineType, setLineType] = useState(LineTypes.DEFAULT);
     const board = useRef(null);
+    const boardWrapper = useRef(null);
 
     const handleClear = () => {
         board.current.clear();
@@ -40,12 +41,18 @@ export default function BoardWrapper() {
         setCanGoForward(actionHistoryManager.canRedo());
     }
 
+    const scroll = (x, y) => {
+        boardWrapper.current.scrollBy(x, y)
+    }
+
     return (
-        <div>
+        <div style={{height: "100vh", width: "100vw"}}>
             <TextSettingsProvider>
                 <ControlBar canGoForward={canGoForward} canGoBackward={canGoBackward} clear={handleClear} selectedTool={selectedTool} setStickerType={setStickerType}
                     setSelectedTool={setSelectedTool} forward={handleForward} backward={handleBackward} useGrid={useGrid} toggleSnapToGrid={toggleSnapToGrid} setLineType={setLineType}/>
-                <Board ref={board} checkHistory={checkHistory} selectedTool={selectedTool} actionHistoryManager={actionHistoryManager} useGrid={useGrid} stickerType={stickerType} lineType={lineType}/>
+                <div ref={boardWrapper} className='board-wrapper'>
+                    <Board ref={board} checkHistory={checkHistory} selectedTool={selectedTool} actionHistoryManager={actionHistoryManager} useGrid={useGrid} stickerType={stickerType} lineType={lineType} scroll={scroll}/>
+                </div>
                 <div className="paperOverlay"></div>
             </TextSettingsProvider>
         </div>

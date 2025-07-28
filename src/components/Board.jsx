@@ -1,7 +1,6 @@
 import React from 'react'
-import { useState, useRef, useEffect, useImperativeHandle, useCallback, useReducer } from 'react'
+import { useState, useRef, useEffect, useImperativeHandle, useReducer, memo } from 'react'
 import StickerCmp from './Sticker.jsx'
-import FileUtil from '../utils/FileUtil.js';
 import Tools from '../enums/Tools.js';
 import LinePoint from '../enums/LinePoint.js';
 import LineReducerActions from '../enums/LineReducerActions.js';
@@ -17,11 +16,11 @@ import lineReducer from '../reducers/LineReducer.js';
 import getStickerId from '../utils/StickerIdGenerator.js';
 import BoardEvent from '../eventhandlers/BoardEvent';
 import EventHandlersManager from '../eventhandlers/EventHandlersManager';
-import { LINE_POINT_HOVER_CIRCLE_RADIUS, LINE_POINT_EDIT_CIRCLE_RADIUS } from '../constants';
+import { LINE_POINT_HOVER_CIRCLE_RADIUS, LINE_POINT_EDIT_CIRCLE_RADIUS, SCROLL_MULTIPLIER } from '../constants';
 
 const eventManager = new EventHandlersManager();
 
-export default function Board({ ref, checkHistory, useGrid, selectedTool, actionHistoryManager, stickerType, lineType }) {
+function Board({ ref, checkHistory, useGrid, selectedTool, actionHistoryManager, stickerType, lineType, scroll }) {
     const GRID_INCREMENT = 25;
     const [stickers, dispatchStickers] = useReducer(stickerReducer, []);
     const [lines, dispatchLines] = useReducer(lineReducer, []);
@@ -36,21 +35,16 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
     const lineBeingHoveredId = useRef(null);
     const linePointBeingHoveredId = useRef(null);
     const board = useRef(null);
-
-    const updateFile = useCallback(() => {
-        const newFile = FileUtil.getFileObject(lines, stickers);
-        window.electronAPI.updateFile(newFile);
-
-    }, [lines, stickers]);
-
+    const pan = useRef(false);
+    const oldHistoryFunc = useRef(null);
+    const oldLines = useRef([]);
+    
     useEffect(() => {
-        window.electronAPI.onUpdateFile((defaultFile) => {
-            const { newStickers, newLines } = FileUtil.parseFileObject(defaultFile, getLineId, getStickerId);
-            dispatchStickerWrapper({ type: StickerReducerActions.SET_STICKERS, stickers: newStickers });
-            dispatchLines({ type: LineReducerActions.SET_LINES, lines: newLines });
-        })
-
-    }, []);
+        window.addEventListener("mouseup", mouseUp);
+        return () => {
+            window.removeEventListener("mouseup", mouseUp);
+        };
+    }, [lines, stickers, lineType, stickerAttachHoverCoords]);
 
     useImperativeHandle(ref, () => {
         return {
@@ -136,8 +130,11 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
 
     const mouseUp = (event) => {
         const boardEvent = createBoardEvent(event.clientX, event.clientY);
+        oldHistoryFunc.current = historyCheckin
+        oldLines.current = lines
         eventManager.mouseUp(boardEvent);
         drawingStartIsAttachedToSticker.current = false;
+        pan.current = false;
     }
 
     const checkHover = debounce((event) => {
@@ -181,6 +178,10 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
         let moveX = event.clientX - mouseX.current;
         let moveY = event.clientY - mouseY.current;
 
+        if (pan.current) {
+            scroll(-moveX * SCROLL_MULTIPLIER, -moveY * SCROLL_MULTIPLIER);
+        }
+
         mouseX.current = event.clientX;
         mouseY.current = event.clientY;
 
@@ -221,7 +222,10 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
             eventManager.startDrawing(drawingStartX, drawingStartY, drawingStartAttachedSticker.current, drawingStartIsAttachedToSticker.current);
         }
         else if (selectedTool === Tools.STICKER) {
-            eventManager.createAndResizeSticker(event.clientX, event.clientY);
+            eventManager.createAndResizeSticker(toBoardCoordsX(event.clientX), toBoardCoordsY(event.clientY));
+        }
+        else if (selectedTool === Tools.PAN) {
+            pan.current = true;
         }
     }
 
@@ -294,10 +298,9 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
             && (!drawingStartIsAttachedToSticker.current || stickerAttachHoverCoords.stickerId !== drawingStartAttachedSticker.current);
     }
 
-    updateFile();
 
     return (
-        <div ref={board} onClick={onClick} onDoubleClick={doubleClick} onMouseDown={mouseDown} onMouseUp={mouseUp} onMouseMove={mouseMove} className='board'>
+        <div ref={board} onClick={onClick} onDoubleClick={doubleClick} onMouseDown={mouseDown} onMouseMove={mouseMove} className='board'>
             <Canvas ref={canvas} lines={lines} eventManager={eventManager}/>
             {stickers.map(sticker =>
                 <StickerCmp key={sticker.stickerId} setDragging={setDrag} stickerId={sticker.stickerId} xCoord={sticker.x} resizeSticker={startResizingSticker} updateTextHistory={updateTextHistory}
@@ -307,3 +310,6 @@ export default function Board({ ref, checkHistory, useGrid, selectedTool, action
         </div>
     );
 }
+
+
+export default memo(Board)

@@ -17,7 +17,6 @@ export default function TableEditor({
 }>) {
     const textAreaRef = useRef<Editor>(null);
     const tableDetails = new TableDetails(4, 5);
-    console.log(tableDetails);
 
     return (
         <table>
