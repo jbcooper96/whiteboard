@@ -1,5 +1,8 @@
 name: CI/CD Vite React App
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [ webapp-demo-main ]
